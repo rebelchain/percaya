@@ -13,7 +13,7 @@ test-ledger/
 dist/
 build/
 .expo/
-apps/mobile/android/app/build/
+apps/mobile/android/
 apps/mobile/.expo/
 
 # Databases & local state

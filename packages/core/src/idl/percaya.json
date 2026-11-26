@@ -1,0 +1,3505 @@
+{
+  "address": "8ZMPKC79FfVvKsQXudDUJfGmmSMRd1HkY2QU7anrCcf6",
+  "metadata": {
+    "name": "percaya",
+    "version": "0.1.0",
+    "spec": "0.1.0",
+    "description": "Pooled crypto calls and Seeker hardware-anchored reputation on Solana"
+  },
+  "instructions": [
+    {
+      "name": "accept_admin",
+      "discriminator": [
+        112,
+        42,
+        45,
+        90,
+        116,
+        181,
+        13,
+        170
+      ],
+      "accounts": [
+        {
+          "name": "pending_admin",
+          "signer": true
+        },
+        {
+          "name": "config",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "buy",
+      "discriminator": [
+        102,
+        6,
+        61,
+        18,
+        1,
+        218,
+        235,
+        234
+      ],
+      "accounts": [
+        {
+          "name": "caller",
+          "signer": true
+        },
+        {
+          "name": "call_pool",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  97,
+                  108,
+                  108
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "call_pool.call_id",
+                "account": "CallPool"
+              }
+            ]
+          }
+        },
+        {
+          "name": "sol_vault",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  115,
+                  111,
+                  108,
+                  95,
+                  118,
+                  97,
+                  117,
+                  108,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "call_pool.call_id",
+                "account": "CallPool"
+              }
+            ]
+          }
+        },
+        {
+          "name": "allowed_token",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  97,
+                  108,
+                  108,
+                  111,
+                  119,
+                  101,
+                  100,
+                  95,
+                  116,
+                  111,
+                  107,
+                  101,
+                  110
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "call_pool.token_mint",
+                "account": "CallPool"
+              }
+            ]
+          }
+        },
+        {
+          "name": "amm_pool",
+          "writable": true
+        },
+        {
+          "name": "amm_sol_vault",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  97,
+                  109,
+                  109,
+                  95,
+                  115,
+                  111,
+                  108
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "amm_pool"
+              }
+            ],
+            "program": {
+              "kind": "const",
+              "value": [
+                148,
+                113,
+                244,
+                247,
+                26,
+                229,
+                115,
+                158,
+                35,
+                115,
+                35,
+                103,
+                239,
+                84,
+                6,
+                213,
+                83,
+                103,
+                102,
+                160,
+                70,
+                123,
+                182,
+                213,
+                153,
+                196,
+                108,
+                215,
+                25,
+                242,
+                145,
+                175
+              ]
+            }
+          }
+        },
+        {
+          "name": "token_mint"
+        },
+        {
+          "name": "amm_token_vault",
+          "writable": true
+        },
+        {
+          "name": "call_token_vault",
+          "writable": true
+        },
+        {
+          "name": "token_program"
+        },
+        {
+          "name": "amm_program",
+          "address": "AzU89s97v6XKT8oKkyV82p2k17z1eK2aFhGwrXTpquxz"
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "min_tokens_out",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "checkpoint",
+      "discriminator": [
+        213,
+        200,
+        19,
+        204,
+        240,
+        143,
+        184,
+        252
+      ],
+      "accounts": [
+        {
+          "name": "call_pool",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  97,
+                  108,
+                  108
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "call_pool.call_id",
+                "account": "CallPool"
+              }
+            ]
+          }
+        },
+        {
+          "name": "amm_pool"
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "claim",
+      "discriminator": [
+        62,
+        198,
+        214,
+        193,
+        213,
+        159,
+        108,
+        210
+      ],
+      "accounts": [
+        {
+          "name": "participant",
+          "writable": true,
+          "signer": true,
+          "relations": [
+            "position"
+          ]
+        },
+        {
+          "name": "call_pool",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  97,
+                  108,
+                  108
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "call_pool.call_id",
+                "account": "CallPool"
+              }
+            ]
+          }
+        },
+        {
+          "name": "sol_vault",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  115,
+                  111,
+                  108,
+                  95,
+                  118,
+                  97,
+                  117,
+                  108,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "call_pool.call_id",
+                "account": "CallPool"
+              }
+            ]
+          }
+        },
+        {
+          "name": "position",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112,
+                  111,
+                  115,
+                  105,
+                  116,
+                  105,
+                  111,
+                  110
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "call_pool.call_id",
+                "account": "CallPool"
+              },
+              {
+                "kind": "account",
+                "path": "participant"
+              }
+            ]
+          }
+        },
+        {
+          "name": "token_mint"
+        },
+        {
+          "name": "call_token_vault",
+          "writable": true
+        },
+        {
+          "name": "participant_token_account",
+          "writable": true
+        },
+        {
+          "name": "token_program"
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "deposit",
+      "discriminator": [
+        242,
+        35,
+        198,
+        137,
+        82,
+        225,
+        242,
+        182
+      ],
+      "accounts": [
+        {
+          "name": "participant",
+          "writable": true,
+          "signer": true,
+          "relations": [
+            "position"
+          ]
+        },
+        {
+          "name": "call_pool",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  97,
+                  108,
+                  108
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "call_pool.call_id",
+                "account": "CallPool"
+              }
+            ]
+          }
+        },
+        {
+          "name": "sol_vault",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  115,
+                  111,
+                  108,
+                  95,
+                  118,
+                  97,
+                  117,
+                  108,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "call_pool.call_id",
+                "account": "CallPool"
+              }
+            ]
+          }
+        },
+        {
+          "name": "position",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112,
+                  111,
+                  115,
+                  105,
+                  116,
+                  105,
+                  111,
+                  110
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "call_pool.call_id",
+                "account": "CallPool"
+              },
+              {
+                "kind": "account",
+                "path": "participant"
+              }
+            ]
+          }
+        },
+        {
+          "name": "amm_pool"
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "amount",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "init_position",
+      "discriminator": [
+        197,
+        20,
+        10,
+        1,
+        97,
+        160,
+        177,
+        91
+      ],
+      "accounts": [
+        {
+          "name": "participant",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "call_pool",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  97,
+                  108,
+                  108
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "call_pool.call_id",
+                "account": "CallPool"
+              }
+            ]
+          }
+        },
+        {
+          "name": "position",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112,
+                  111,
+                  115,
+                  105,
+                  116,
+                  105,
+                  111,
+                  110
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "call_pool.call_id",
+                "account": "CallPool"
+              },
+              {
+                "kind": "account",
+                "path": "participant"
+              }
+            ]
+          }
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "initialize_config",
+      "discriminator": [
+        208,
+        127,
+        21,
+        1,
+        194,
+        190,
+        196,
+        70
+      ],
+      "accounts": [
+        {
+          "name": "admin",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "config",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "params",
+          "type": {
+            "defined": {
+              "name": "ProtocolParams"
+            }
+          }
+        },
+        {
+          "name": "genesis_authority",
+          "type": "pubkey"
+        },
+        {
+          "name": "treasury",
+          "type": "pubkey"
+        }
+      ]
+    },
+    {
+      "name": "open_call",
+      "discriminator": [
+        153,
+        26,
+        89,
+        45,
+        252,
+        243,
+        183,
+        62
+      ],
+      "accounts": [
+        {
+          "name": "caller",
+          "writable": true,
+          "signer": true,
+          "relations": [
+            "caller_record"
+          ]
+        },
+        {
+          "name": "config",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "caller_record",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  97,
+                  108,
+                  108,
+                  101,
+                  114
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "caller"
+              }
+            ]
+          }
+        },
+        {
+          "name": "allowed_token",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  97,
+                  108,
+                  108,
+                  111,
+                  119,
+                  101,
+                  100,
+                  95,
+                  116,
+                  111,
+                  107,
+                  101,
+                  110
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "allowed_token.token_mint",
+                "account": "AllowedToken"
+              }
+            ]
+          }
+        },
+        {
+          "name": "amm_pool",
+          "relations": [
+            "allowed_token"
+          ]
+        },
+        {
+          "name": "call_pool",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  97,
+                  108,
+                  108
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "config.next_call_id",
+                "account": "GlobalConfig"
+              }
+            ]
+          }
+        },
+        {
+          "name": "sol_vault",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  115,
+                  111,
+                  108,
+                  95,
+                  118,
+                  97,
+                  117,
+                  108,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "config.next_call_id",
+                "account": "GlobalConfig"
+              }
+            ]
+          }
+        },
+        {
+          "name": "caller_position",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112,
+                  111,
+                  115,
+                  105,
+                  116,
+                  105,
+                  111,
+                  110
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "config.next_call_id",
+                "account": "GlobalConfig"
+              },
+              {
+                "kind": "account",
+                "path": "caller"
+              }
+            ]
+          }
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "args",
+          "type": {
+            "defined": {
+              "name": "OpenCallArgs"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "post_bond",
+      "discriminator": [
+        168,
+        151,
+        202,
+        119,
+        163,
+        58,
+        147,
+        247
+      ],
+      "accounts": [
+        {
+          "name": "caller",
+          "writable": true,
+          "signer": true,
+          "relations": [
+            "caller_record"
+          ]
+        },
+        {
+          "name": "config",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "caller_record",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  97,
+                  108,
+                  108,
+                  101,
+                  114
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "caller"
+              }
+            ]
+          }
+        },
+        {
+          "name": "bond_vault",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  98,
+                  111,
+                  110,
+                  100,
+                  95,
+                  118,
+                  97,
+                  117,
+                  108,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "caller"
+              }
+            ]
+          }
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "amount",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "refund",
+      "discriminator": [
+        2,
+        96,
+        183,
+        251,
+        63,
+        208,
+        46,
+        46
+      ],
+      "accounts": [
+        {
+          "name": "call_pool",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  97,
+                  108,
+                  108
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "call_pool.call_id",
+                "account": "CallPool"
+              }
+            ]
+          }
+        },
+        {
+          "name": "caller_record",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  97,
+                  108,
+                  108,
+                  101,
+                  114
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "call_pool.caller",
+                "account": "CallPool"
+              }
+            ]
+          }
+        },
+        {
+          "name": "allowed_token",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  97,
+                  108,
+                  108,
+                  111,
+                  119,
+                  101,
+                  100,
+                  95,
+                  116,
+                  111,
+                  107,
+                  101,
+                  110
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "call_pool.token_mint",
+                "account": "CallPool"
+              }
+            ]
+          }
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "register_caller",
+      "discriminator": [
+        41,
+        1,
+        139,
+        167,
+        235,
+        41,
+        118,
+        21
+      ],
+      "accounts": [
+        {
+          "name": "caller",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "caller_record",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  97,
+                  108,
+                  108,
+                  101,
+                  114
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "caller"
+              }
+            ]
+          }
+        },
+        {
+          "name": "bond_vault",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  98,
+                  111,
+                  110,
+                  100,
+                  95,
+                  118,
+                  97,
+                  117,
+                  108,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "caller"
+              }
+            ]
+          }
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "register_token",
+      "discriminator": [
+        32,
+        146,
+        36,
+        240,
+        80,
+        183,
+        36,
+        84
+      ],
+      "accounts": [
+        {
+          "name": "admin",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "config",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "token_mint"
+        },
+        {
+          "name": "amm_pool"
+        },
+        {
+          "name": "allowed_token",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  97,
+                  108,
+                  108,
+                  111,
+                  119,
+                  101,
+                  100,
+                  95,
+                  116,
+                  111,
+                  107,
+                  101,
+                  110
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "token_mint"
+              }
+            ]
+          }
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "allowed",
+          "type": "bool"
+        }
+      ]
+    },
+    {
+      "name": "request_bond_withdraw",
+      "discriminator": [
+        42,
+        61,
+        189,
+        60,
+        98,
+        55,
+        67,
+        24
+      ],
+      "accounts": [
+        {
+          "name": "caller",
+          "writable": true,
+          "signer": true,
+          "relations": [
+            "caller_record"
+          ]
+        },
+        {
+          "name": "config",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "caller_record",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  97,
+                  108,
+                  108,
+                  101,
+                  114
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "caller"
+              }
+            ]
+          }
+        },
+        {
+          "name": "bond_vault",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  98,
+                  111,
+                  110,
+                  100,
+                  95,
+                  118,
+                  97,
+                  117,
+                  108,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "caller"
+              }
+            ]
+          }
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "sell",
+      "discriminator": [
+        51,
+        230,
+        133,
+        164,
+        1,
+        127,
+        131,
+        173
+      ],
+      "accounts": [
+        {
+          "name": "keeper",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "call_pool",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  97,
+                  108,
+                  108
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "call_pool.call_id",
+                "account": "CallPool"
+              }
+            ]
+          }
+        },
+        {
+          "name": "sol_vault",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  115,
+                  111,
+                  108,
+                  95,
+                  118,
+                  97,
+                  117,
+                  108,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "call_pool.call_id",
+                "account": "CallPool"
+              }
+            ]
+          }
+        },
+        {
+          "name": "caller_record",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  97,
+                  108,
+                  108,
+                  101,
+                  114
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "call_pool.caller",
+                "account": "CallPool"
+              }
+            ]
+          }
+        },
+        {
+          "name": "amm_pool",
+          "writable": true
+        },
+        {
+          "name": "amm_sol_vault",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  97,
+                  109,
+                  109,
+                  95,
+                  115,
+                  111,
+                  108
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "amm_pool"
+              }
+            ],
+            "program": {
+              "kind": "const",
+              "value": [
+                148,
+                113,
+                244,
+                247,
+                26,
+                229,
+                115,
+                158,
+                35,
+                115,
+                35,
+                103,
+                239,
+                84,
+                6,
+                213,
+                83,
+                103,
+                102,
+                160,
+                70,
+                123,
+                182,
+                213,
+                153,
+                196,
+                108,
+                215,
+                25,
+                242,
+                145,
+                175
+              ]
+            }
+          }
+        },
+        {
+          "name": "token_mint"
+        },
+        {
+          "name": "amm_token_vault",
+          "writable": true
+        },
+        {
+          "name": "call_token_vault",
+          "writable": true
+        },
+        {
+          "name": "token_program"
+        },
+        {
+          "name": "amm_program",
+          "address": "AzU89s97v6XKT8oKkyV82p2k17z1eK2aFhGwrXTpquxz"
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "set_pause",
+      "discriminator": [
+        63,
+        32,
+        154,
+        2,
+        56,
+        103,
+        79,
+        45
+      ],
+      "accounts": [
+        {
+          "name": "admin",
+          "signer": true
+        },
+        {
+          "name": "config",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        }
+      ],
+      "args": [
+        {
+          "name": "paused",
+          "type": "bool"
+        }
+      ]
+    },
+    {
+      "name": "set_token_allowed",
+      "discriminator": [
+        82,
+        222,
+        98,
+        240,
+        225,
+        63,
+        10,
+        169
+      ],
+      "accounts": [
+        {
+          "name": "admin",
+          "signer": true
+        },
+        {
+          "name": "config",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "allowed_token",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  97,
+                  108,
+                  108,
+                  111,
+                  119,
+                  101,
+                  100,
+                  95,
+                  116,
+                  111,
+                  107,
+                  101,
+                  110
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "allowed_token.token_mint",
+                "account": "AllowedToken"
+              }
+            ]
+          }
+        }
+      ],
+      "args": [
+        {
+          "name": "allowed",
+          "type": "bool"
+        }
+      ]
+    },
+    {
+      "name": "slash",
+      "discriminator": [
+        204,
+        141,
+        18,
+        161,
+        8,
+        177,
+        92,
+        142
+      ],
+      "accounts": [
+        {
+          "name": "admin",
+          "signer": true
+        },
+        {
+          "name": "config",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "caller_record",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  97,
+                  108,
+                  108,
+                  101,
+                  114
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "caller_record.caller",
+                "account": "CallerRecord"
+              }
+            ]
+          }
+        },
+        {
+          "name": "bond_vault",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  98,
+                  111,
+                  110,
+                  100,
+                  95,
+                  118,
+                  97,
+                  117,
+                  108,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "caller_record.caller",
+                "account": "CallerRecord"
+              }
+            ]
+          }
+        },
+        {
+          "name": "treasury",
+          "writable": true
+        },
+        {
+          "name": "genesis_registry",
+          "writable": true
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "amount",
+          "type": "u64"
+        },
+        {
+          "name": "reason",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "split",
+      "discriminator": [
+        124,
+        189,
+        27,
+        43,
+        216,
+        40,
+        147,
+        66
+      ],
+      "accounts": [
+        {
+          "name": "call_pool",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  97,
+                  108,
+                  108
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "call_pool.call_id",
+                "account": "CallPool"
+              }
+            ]
+          }
+        },
+        {
+          "name": "caller_record",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  97,
+                  108,
+                  108,
+                  101,
+                  114
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "call_pool.caller",
+                "account": "CallPool"
+              }
+            ]
+          }
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "transfer_admin",
+      "discriminator": [
+        42,
+        242,
+        66,
+        106,
+        228,
+        10,
+        111,
+        156
+      ],
+      "accounts": [
+        {
+          "name": "admin",
+          "signer": true
+        },
+        {
+          "name": "config",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        }
+      ],
+      "args": [
+        {
+          "name": "new_admin",
+          "type": "pubkey"
+        }
+      ]
+    },
+    {
+      "name": "update_params",
+      "discriminator": [
+        108,
+        178,
+        190,
+        95,
+        94,
+        203,
+        116,
+        20
+      ],
+      "accounts": [
+        {
+          "name": "admin",
+          "signer": true
+        },
+        {
+          "name": "config",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        }
+      ],
+      "args": [
+        {
+          "name": "params",
+          "type": {
+            "defined": {
+              "name": "ProtocolParams"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "verify_seeker_genesis",
+      "docs": [
+        "Binds a 1-per-device Token-2022 NonTransferable Seeker Genesis NFT to this caller.",
+        "`GenesisRegistry` is initialized with `init` so the same hardware token can never",
+        "initialize a second fresh caller record to reset negative returns or slashes."
+      ],
+      "discriminator": [
+        180,
+        157,
+        216,
+        163,
+        8,
+        49,
+        38,
+        203
+      ],
+      "accounts": [
+        {
+          "name": "caller",
+          "writable": true,
+          "signer": true,
+          "relations": [
+            "caller_record"
+          ]
+        },
+        {
+          "name": "config",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "caller_record",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  97,
+                  108,
+                  108,
+                  101,
+                  114
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "caller"
+              }
+            ]
+          }
+        },
+        {
+          "name": "genesis_mint"
+        },
+        {
+          "name": "genesis_token_account"
+        },
+        {
+          "name": "genesis_registry",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  103,
+                  101,
+                  110,
+                  101,
+                  115,
+                  105,
+                  115
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "genesis_mint"
+              }
+            ]
+          }
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "withdraw",
+      "discriminator": [
+        183,
+        18,
+        70,
+        156,
+        148,
+        109,
+        161,
+        34
+      ],
+      "accounts": [
+        {
+          "name": "participant",
+          "writable": true,
+          "signer": true,
+          "relations": [
+            "position"
+          ]
+        },
+        {
+          "name": "call_pool",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  97,
+                  108,
+                  108
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "call_pool.call_id",
+                "account": "CallPool"
+              }
+            ]
+          }
+        },
+        {
+          "name": "sol_vault",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  115,
+                  111,
+                  108,
+                  95,
+                  118,
+                  97,
+                  117,
+                  108,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "call_pool.call_id",
+                "account": "CallPool"
+              }
+            ]
+          }
+        },
+        {
+          "name": "position",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112,
+                  111,
+                  115,
+                  105,
+                  116,
+                  105,
+                  111,
+                  110
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "call_pool.call_id",
+                "account": "CallPool"
+              },
+              {
+                "kind": "account",
+                "path": "participant"
+              }
+            ]
+          }
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "amount",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "withdraw_bond",
+      "discriminator": [
+        222,
+        199,
+        141,
+        31,
+        188,
+        93,
+        155,
+        40
+      ],
+      "accounts": [
+        {
+          "name": "caller",
+          "writable": true,
+          "signer": true,
+          "relations": [
+            "caller_record"
+          ]
+        },
+        {
+          "name": "config",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "caller_record",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  97,
+                  108,
+                  108,
+                  101,
+                  114
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "caller"
+              }
+            ]
+          }
+        },
+        {
+          "name": "bond_vault",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  98,
+                  111,
+                  110,
+                  100,
+                  95,
+                  118,
+                  97,
+                  117,
+                  108,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "caller"
+              }
+            ]
+          }
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "amount",
+          "type": "u64"
+        }
+      ]
+    }
+  ],
+  "accounts": [
+    {
+      "name": "AllowedToken",
+      "discriminator": [
+        248,
+        231,
+        202,
+        176,
+        102,
+        84,
+        97,
+        187
+      ]
+    },
+    {
+      "name": "CallPool",
+      "discriminator": [
+        138,
+        181,
+        72,
+        138,
+        94,
+        73,
+        205,
+        245
+      ]
+    },
+    {
+      "name": "CallerRecord",
+      "discriminator": [
+        155,
+        64,
+        53,
+        203,
+        100,
+        157,
+        162,
+        206
+      ]
+    },
+    {
+      "name": "GenesisRegistry",
+      "discriminator": [
+        230,
+        114,
+        58,
+        54,
+        54,
+        49,
+        124,
+        78
+      ]
+    },
+    {
+      "name": "GlobalConfig",
+      "discriminator": [
+        149,
+        8,
+        156,
+        202,
+        160,
+        252,
+        176,
+        217
+      ]
+    },
+    {
+      "name": "Position",
+      "discriminator": [
+        170,
+        188,
+        143,
+        228,
+        122,
+        64,
+        247,
+        208
+      ]
+    }
+  ],
+  "events": [
+    {
+      "name": "BondPosted",
+      "discriminator": [
+        39,
+        196,
+        2,
+        142,
+        202,
+        74,
+        107,
+        205
+      ]
+    },
+    {
+      "name": "BondSlashed",
+      "discriminator": [
+        59,
+        7,
+        252,
+        195,
+        234,
+        156,
+        42,
+        54
+      ]
+    },
+    {
+      "name": "CallOpened",
+      "discriminator": [
+        80,
+        97,
+        83,
+        218,
+        46,
+        113,
+        128,
+        51
+      ]
+    },
+    {
+      "name": "PoolBought",
+      "discriminator": [
+        250,
+        234,
+        132,
+        48,
+        86,
+        11,
+        135,
+        53
+      ]
+    },
+    {
+      "name": "PoolDeposited",
+      "discriminator": [
+        148,
+        17,
+        86,
+        50,
+        113,
+        125,
+        70,
+        132
+      ]
+    },
+    {
+      "name": "PoolRefunded",
+      "discriminator": [
+        240,
+        171,
+        34,
+        49,
+        64,
+        55,
+        46,
+        64
+      ]
+    },
+    {
+      "name": "PoolSold",
+      "discriminator": [
+        145,
+        157,
+        63,
+        221,
+        5,
+        207,
+        209,
+        103
+      ]
+    },
+    {
+      "name": "PoolSplit",
+      "discriminator": [
+        91,
+        200,
+        178,
+        76,
+        247,
+        70,
+        183,
+        190
+      ]
+    },
+    {
+      "name": "PoolWithdrawn",
+      "discriminator": [
+        23,
+        62,
+        221,
+        23,
+        53,
+        222,
+        69,
+        207
+      ]
+    },
+    {
+      "name": "PositionClaimed",
+      "discriminator": [
+        149,
+        250,
+        141,
+        45,
+        210,
+        198,
+        94,
+        148
+      ]
+    },
+    {
+      "name": "PriceCheckpointed",
+      "discriminator": [
+        242,
+        134,
+        195,
+        183,
+        9,
+        83,
+        129,
+        141
+      ]
+    },
+    {
+      "name": "SeekerGenesisVerified",
+      "discriminator": [
+        33,
+        63,
+        202,
+        73,
+        22,
+        48,
+        131,
+        199
+      ]
+    }
+  ],
+  "errors": [
+    {
+      "code": 6000,
+      "name": "UnauthorizedAdmin",
+      "msg": "Caller does not have admin authority"
+    },
+    {
+      "code": 6001,
+      "name": "UnauthorizedPendingAdmin",
+      "msg": "Caller is not the pending admin"
+    },
+    {
+      "code": 6002,
+      "name": "InvalidParams",
+      "msg": "Invalid protocol parameter bounds"
+    },
+    {
+      "code": 6003,
+      "name": "OpenPaused",
+      "msg": "Opening new calls is currently paused"
+    },
+    {
+      "code": 6004,
+      "name": "TokenNotAllowed",
+      "msg": "Token is not on the allow list"
+    },
+    {
+      "code": 6005,
+      "name": "PoolMintMismatch",
+      "msg": "AMM pool mint does not match allowed token mint"
+    },
+    {
+      "code": 6006,
+      "name": "ZeroAmount",
+      "msg": "Amount must be strictly greater than zero"
+    },
+    {
+      "code": 6007,
+      "name": "InsufficientBond",
+      "msg": "Caller bond is below protocol minimum"
+    },
+    {
+      "code": 6008,
+      "name": "ActiveCallsExist",
+      "msg": "Caller still has active open or holding calls"
+    },
+    {
+      "code": 6009,
+      "name": "BondCooldownNotReady",
+      "msg": "Bond withdrawal has not been requested or cooldown not elapsed"
+    },
+    {
+      "code": 6010,
+      "name": "AlreadySeekerVerified",
+      "msg": "Caller is already verified with a Seeker Genesis Token"
+    },
+    {
+      "code": 6011,
+      "name": "InvalidSeekerGenesis",
+      "msg": "Invalid Seeker Genesis Token-2022 non-transferable NFT or authority"
+    },
+    {
+      "code": 6012,
+      "name": "InvalidGenesisRegistry",
+      "msg": "Invalid GenesisRegistry account for verified caller"
+    },
+    {
+      "code": 6013,
+      "name": "InvalidSlashReason",
+      "msg": "Slash reason must be non-empty and at most 200 bytes"
+    },
+    {
+      "code": 6014,
+      "name": "ThesisTooLong",
+      "msg": "Thesis exceeds 280 UTF-8 bytes"
+    },
+    {
+      "code": 6015,
+      "name": "InvalidCallRules",
+      "msg": "Call rule parameter is outside protocol bounds"
+    },
+    {
+      "code": 6016,
+      "name": "ProfitShareExceedsTier",
+      "msg": "Profit share exceeds caller tier maximum"
+    },
+    {
+      "code": 6017,
+      "name": "CapExceeded",
+      "msg": "Deposit or pool size exceeds bond tier cap"
+    },
+    {
+      "code": 6018,
+      "name": "PriceImpactTooHigh",
+      "msg": "Buy price impact exceeds maximum allowed basis points"
+    },
+    {
+      "code": 6019,
+      "name": "CallerShareTooLow",
+      "msg": "Caller stake would fall below minimum required pool share"
+    },
+    {
+      "code": 6020,
+      "name": "InvalidCallState",
+      "msg": "Invalid call state for this instruction"
+    },
+    {
+      "code": 6021,
+      "name": "WindowClosed",
+      "msg": "Join window has already closed"
+    },
+    {
+      "code": 6022,
+      "name": "WindowStillOpen",
+      "msg": "Join window is still open"
+    },
+    {
+      "code": 6023,
+      "name": "BuyDeadlinePassed",
+      "msg": "Buy deadline has passed"
+    },
+    {
+      "code": 6024,
+      "name": "CallerCannotWithdraw",
+      "msg": "Caller cannot withdraw their stake during the join window"
+    },
+    {
+      "code": 6025,
+      "name": "InsufficientDeposit",
+      "msg": "Withdraw amount exceeds participant deposit"
+    },
+    {
+      "code": 6026,
+      "name": "OnlyCallerMayBuy",
+      "msg": "Only the caller who opened the pool may execute the buy"
+    },
+    {
+      "code": 6027,
+      "name": "BelowMinPool",
+      "msg": "Pool total is below minimum required size"
+    },
+    {
+      "code": 6028,
+      "name": "InvalidCallTokenVault",
+      "msg": "Invalid call token vault owner or mint"
+    },
+    {
+      "code": 6029,
+      "name": "BuySlippageExceeded",
+      "msg": "Received tokens fell below caller min_tokens_out guard"
+    },
+    {
+      "code": 6030,
+      "name": "CheckpointTooSoon",
+      "msg": "Minimum gap between checkpoints has not elapsed yet"
+    },
+    {
+      "code": 6031,
+      "name": "CheckpointsNotReady",
+      "msg": "Sale requires two spaced checkpoints with the latest still fresh"
+    },
+    {
+      "code": 6032,
+      "name": "NoSellConditionMet",
+      "msg": "Neither take-profit, stop-loss, nor max-hold agreement is met"
+    },
+    {
+      "code": 6033,
+      "name": "SellBelowFloor",
+      "msg": "Sale output fell below checkpoint-derived floor"
+    },
+    {
+      "code": 6034,
+      "name": "RefundNotEligible",
+      "msg": "Refund conditions have not been met yet"
+    },
+    {
+      "code": 6035,
+      "name": "SplitNotEligible",
+      "msg": "Split grace period after max hold has not elapsed yet"
+    },
+    {
+      "code": 6036,
+      "name": "NothingToClaim",
+      "msg": "Position has already been claimed or has zero deposit"
+    },
+    {
+      "code": 6037,
+      "name": "MathOverflow",
+      "msg": "Arithmetic overflow"
+    }
+  ],
+  "types": [
+    {
+      "name": "AllowedToken",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "token_mint",
+            "type": "pubkey"
+          },
+          {
+            "name": "amm_pool",
+            "type": "pubkey"
+          },
+          {
+            "name": "allowed",
+            "type": "bool"
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "AmmPool",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "authority",
+            "type": "pubkey"
+          },
+          {
+            "name": "token_mint",
+            "type": "pubkey"
+          },
+          {
+            "name": "token_vault",
+            "type": "pubkey"
+          },
+          {
+            "name": "token_decimals",
+            "type": "u8"
+          },
+          {
+            "name": "fee_bps",
+            "type": "u16"
+          },
+          {
+            "name": "sol_reserve",
+            "type": "u64"
+          },
+          {
+            "name": "token_reserve",
+            "type": "u64"
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          },
+          {
+            "name": "sol_vault_bump",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "BondPosted",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "caller",
+            "type": "pubkey"
+          },
+          {
+            "name": "added_lamports",
+            "type": "u64"
+          },
+          {
+            "name": "total_bond_lamports",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "BondSlashed",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "caller",
+            "type": "pubkey"
+          },
+          {
+            "name": "slashed_lamports",
+            "type": "u64"
+          },
+          {
+            "name": "remaining_bond_lamports",
+            "type": "u64"
+          },
+          {
+            "name": "slashes_count",
+            "type": "u32"
+          },
+          {
+            "name": "reason",
+            "type": "string"
+          }
+        ]
+      }
+    },
+    {
+      "name": "CallOpened",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "call_id",
+            "type": "u64"
+          },
+          {
+            "name": "call_pda",
+            "type": "pubkey"
+          },
+          {
+            "name": "caller",
+            "type": "pubkey"
+          },
+          {
+            "name": "token_mint",
+            "type": "pubkey"
+          },
+          {
+            "name": "amm_pool",
+            "type": "pubkey"
+          },
+          {
+            "name": "stake_lamports",
+            "type": "u64"
+          },
+          {
+            "name": "cap_lamports",
+            "type": "u64"
+          },
+          {
+            "name": "window_end",
+            "type": "i64"
+          },
+          {
+            "name": "buy_deadline",
+            "type": "i64"
+          },
+          {
+            "name": "max_hold",
+            "type": "u32"
+          },
+          {
+            "name": "take_profit_bps",
+            "type": "u32"
+          },
+          {
+            "name": "stop_loss_bps",
+            "type": "u16"
+          },
+          {
+            "name": "share_bps",
+            "type": "u16"
+          },
+          {
+            "name": "tier",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "CallPool",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "call_id",
+            "type": "u64"
+          },
+          {
+            "name": "caller",
+            "type": "pubkey"
+          },
+          {
+            "name": "token_mint",
+            "type": "pubkey"
+          },
+          {
+            "name": "opened_at",
+            "type": "i64"
+          },
+          {
+            "name": "state",
+            "type": {
+              "defined": {
+                "name": "CallState"
+              }
+            }
+          },
+          {
+            "name": "settle_reason",
+            "type": "u8"
+          },
+          {
+            "name": "rules",
+            "type": {
+              "defined": {
+                "name": "CallRules"
+              }
+            }
+          },
+          {
+            "name": "total_in",
+            "type": "u64"
+          },
+          {
+            "name": "caller_stake",
+            "type": "u64"
+          },
+          {
+            "name": "depositors_count",
+            "type": "u32"
+          },
+          {
+            "name": "claims_left",
+            "type": "u32"
+          },
+          {
+            "name": "tokens_bought",
+            "type": "u64"
+          },
+          {
+            "name": "bought_at",
+            "type": "i64"
+          },
+          {
+            "name": "hold_until",
+            "type": "i64"
+          },
+          {
+            "name": "prev_checkpoint",
+            "type": {
+              "defined": {
+                "name": "Checkpoint"
+              }
+            }
+          },
+          {
+            "name": "last_checkpoint",
+            "type": {
+              "defined": {
+                "name": "Checkpoint"
+              }
+            }
+          },
+          {
+            "name": "gross_out",
+            "type": "u64"
+          },
+          {
+            "name": "payout",
+            "type": "u64"
+          },
+          {
+            "name": "fee",
+            "type": "u64"
+          },
+          {
+            "name": "claimed_amount",
+            "type": "u64"
+          },
+          {
+            "name": "net_return_bps",
+            "type": "i64"
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          },
+          {
+            "name": "sol_vault_bump",
+            "type": "u8"
+          },
+          {
+            "name": "thesis",
+            "type": "string"
+          }
+        ]
+      }
+    },
+    {
+      "name": "CallRules",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "amm_pool",
+            "type": "pubkey"
+          },
+          {
+            "name": "window_end",
+            "type": "i64"
+          },
+          {
+            "name": "buy_deadline",
+            "type": "i64"
+          },
+          {
+            "name": "max_hold",
+            "type": "u32"
+          },
+          {
+            "name": "take_profit_bps",
+            "type": "u32"
+          },
+          {
+            "name": "stop_loss_bps",
+            "type": "u16"
+          },
+          {
+            "name": "share_bps",
+            "type": "u16"
+          },
+          {
+            "name": "min_caller_bps",
+            "type": "u16"
+          },
+          {
+            "name": "max_impact_bps",
+            "type": "u16"
+          },
+          {
+            "name": "sell_tolerance_bps",
+            "type": "u16"
+          },
+          {
+            "name": "keeper_bps",
+            "type": "u16"
+          },
+          {
+            "name": "checkpoint_gap",
+            "type": "u32"
+          },
+          {
+            "name": "split_grace",
+            "type": "u32"
+          },
+          {
+            "name": "cap",
+            "type": "u64"
+          },
+          {
+            "name": "min_pool",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "CallState",
+      "type": {
+        "kind": "enum",
+        "variants": [
+          {
+            "name": "Open"
+          },
+          {
+            "name": "Holding"
+          },
+          {
+            "name": "Settled"
+          },
+          {
+            "name": "Refunded"
+          },
+          {
+            "name": "Split"
+          }
+        ]
+      }
+    },
+    {
+      "name": "CallerRecord",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "caller",
+            "type": "pubkey"
+          },
+          {
+            "name": "genesis_mint",
+            "type": "pubkey"
+          },
+          {
+            "name": "is_seeker_verified",
+            "type": "bool"
+          },
+          {
+            "name": "bond_lamports",
+            "type": "u64"
+          },
+          {
+            "name": "withdraw_ready_at",
+            "type": "i64"
+          },
+          {
+            "name": "settled",
+            "type": "u32"
+          },
+          {
+            "name": "losses",
+            "type": "u32"
+          },
+          {
+            "name": "negligent",
+            "type": "u32"
+          },
+          {
+            "name": "refunded",
+            "type": "u32"
+          },
+          {
+            "name": "split",
+            "type": "u32"
+          },
+          {
+            "name": "slashes",
+            "type": "u32"
+          },
+          {
+            "name": "active",
+            "type": "u32"
+          },
+          {
+            "name": "last_active",
+            "type": "i64"
+          },
+          {
+            "name": "sum_net_bps",
+            "type": "i64"
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          },
+          {
+            "name": "bond_vault_bump",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Checkpoint",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "value",
+            "type": "u64"
+          },
+          {
+            "name": "at",
+            "type": "i64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "GenesisRegistry",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "genesis_mint",
+            "type": "pubkey"
+          },
+          {
+            "name": "bound_caller",
+            "type": "pubkey"
+          },
+          {
+            "name": "slashed",
+            "type": "bool"
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "GlobalConfig",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "admin",
+            "type": "pubkey"
+          },
+          {
+            "name": "pending_admin",
+            "type": "pubkey"
+          },
+          {
+            "name": "treasury",
+            "type": "pubkey"
+          },
+          {
+            "name": "genesis_authority",
+            "type": "pubkey"
+          },
+          {
+            "name": "next_call_id",
+            "type": "u64"
+          },
+          {
+            "name": "open_paused",
+            "type": "bool"
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          },
+          {
+            "name": "params",
+            "type": {
+              "defined": {
+                "name": "ProtocolParams"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "OpenCallArgs",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "window_duration",
+            "type": "u32"
+          },
+          {
+            "name": "take_profit_bps",
+            "type": "u32"
+          },
+          {
+            "name": "stop_loss_bps",
+            "type": "u16"
+          },
+          {
+            "name": "max_hold_duration",
+            "type": "u32"
+          },
+          {
+            "name": "share_bps",
+            "type": "u16"
+          },
+          {
+            "name": "stake_lamports",
+            "type": "u64"
+          },
+          {
+            "name": "thesis",
+            "type": "string"
+          }
+        ]
+      }
+    },
+    {
+      "name": "PoolBought",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "call_id",
+            "type": "u64"
+          },
+          {
+            "name": "total_in_lamports",
+            "type": "u64"
+          },
+          {
+            "name": "tokens_bought",
+            "type": "u64"
+          },
+          {
+            "name": "bought_at",
+            "type": "i64"
+          },
+          {
+            "name": "hold_until",
+            "type": "i64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "PoolDeposited",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "call_id",
+            "type": "u64"
+          },
+          {
+            "name": "participant",
+            "type": "pubkey"
+          },
+          {
+            "name": "amount_lamports",
+            "type": "u64"
+          },
+          {
+            "name": "total_in_lamports",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "PoolRefunded",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "call_id",
+            "type": "u64"
+          },
+          {
+            "name": "reason",
+            "type": "u8"
+          },
+          {
+            "name": "caller_negligent",
+            "type": "bool"
+          }
+        ]
+      }
+    },
+    {
+      "name": "PoolSold",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "call_id",
+            "type": "u64"
+          },
+          {
+            "name": "keeper",
+            "type": "pubkey"
+          },
+          {
+            "name": "reason",
+            "type": "u8"
+          },
+          {
+            "name": "gross_out_lamports",
+            "type": "u64"
+          },
+          {
+            "name": "keeper_reward_lamports",
+            "type": "u64"
+          },
+          {
+            "name": "fee_lamports",
+            "type": "u64"
+          },
+          {
+            "name": "payout_lamports",
+            "type": "u64"
+          },
+          {
+            "name": "net_return_bps",
+            "type": "i64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "PoolSplit",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "call_id",
+            "type": "u64"
+          },
+          {
+            "name": "tokens_to_split",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "PoolWithdrawn",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "call_id",
+            "type": "u64"
+          },
+          {
+            "name": "participant",
+            "type": "pubkey"
+          },
+          {
+            "name": "amount_lamports",
+            "type": "u64"
+          },
+          {
+            "name": "total_in_lamports",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Position",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "call_id",
+            "type": "u64"
+          },
+          {
+            "name": "participant",
+            "type": "pubkey"
+          },
+          {
+            "name": "deposited",
+            "type": "u64"
+          },
+          {
+            "name": "claimed",
+            "type": "bool"
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "PositionClaimed",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "call_id",
+            "type": "u64"
+          },
+          {
+            "name": "participant",
+            "type": "pubkey"
+          },
+          {
+            "name": "amount",
+            "type": "u64"
+          },
+          {
+            "name": "is_token_split",
+            "type": "bool"
+          }
+        ]
+      }
+    },
+    {
+      "name": "PriceCheckpointed",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "call_id",
+            "type": "u64"
+          },
+          {
+            "name": "quote_lamports",
+            "type": "u64"
+          },
+          {
+            "name": "at",
+            "type": "i64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "ProtocolParams",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "min_bond",
+            "type": "u64"
+          },
+          {
+            "name": "min_pool",
+            "type": "u64"
+          },
+          {
+            "name": "min_window",
+            "type": "u32"
+          },
+          {
+            "name": "max_window",
+            "type": "u32"
+          },
+          {
+            "name": "buy_grace",
+            "type": "u32"
+          },
+          {
+            "name": "min_hold",
+            "type": "u32"
+          },
+          {
+            "name": "max_hold",
+            "type": "u32"
+          },
+          {
+            "name": "checkpoint_gap",
+            "type": "u32"
+          },
+          {
+            "name": "split_grace",
+            "type": "u32"
+          },
+          {
+            "name": "bond_cooldown",
+            "type": "u32"
+          },
+          {
+            "name": "min_stop_loss_bps",
+            "type": "u16"
+          },
+          {
+            "name": "max_stop_loss_bps",
+            "type": "u16"
+          },
+          {
+            "name": "min_caller_bps",
+            "type": "u16"
+          },
+          {
+            "name": "max_impact_bps",
+            "type": "u16"
+          },
+          {
+            "name": "sell_tolerance_bps",
+            "type": "u16"
+          },
+          {
+            "name": "keeper_bps",
+            "type": "u16"
+          }
+        ]
+      }
+    },
+    {
+      "name": "SeekerGenesisVerified",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "caller",
+            "type": "pubkey"
+          },
+          {
+            "name": "genesis_mint",
+            "type": "pubkey"
+          }
+        ]
+      }
+    }
+  ]
+}

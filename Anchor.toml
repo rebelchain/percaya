@@ -1,0 +1,23 @@
+skip_local_validator = true
+
+[toolchain]
+anchor_version = "1.2.2"
+
+[features]
+resolution = true
+skip-lint = false
+
+[programs.localnet]
+percaya = "8ZMPKC79FfVvKsQXudDUJfGmmSMRd1HkY2QU7anrCcf6"
+percaya_amm = "AzU89s97v6XKT8oKkyV82p2k17z1eK2aFhGwrXTpquxz"
+
+[programs.devnet]
+percaya = "8ZMPKC79FfVvKsQXudDUJfGmmSMRd1HkY2QU7anrCcf6"
+percaya_amm = "AzU89s97v6XKT8oKkyV82p2k17z1eK2aFhGwrXTpquxz"
+
+[provider]
+cluster = "devnet"
+wallet = "~/.config/solana/id.json"
+
+[scripts]
+test = "cargo test"

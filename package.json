@@ -1,0 +1,22 @@
+{
+  "name": "percaya",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "packages/*",
+    "apps/api",
+    "apps/web"
+  ],
+  "scripts": {
+    "build:programs": "anchor build",
+    "test:programs": "cargo test",
+    "dev:api": "npm --workspace @percaya/api run dev",
+    "dev:web": "npm --workspace @percaya/web run dev",
+    "dev:mobile": "npm --workspace @percaya/mobile run start",
+    "test:api": "npm --workspace @percaya/api run test",
+    "typecheck": "npm --workspaces --if-present run typecheck",
+    "seed:devnet": "node --experimental-strip-types scripts/seed-devnet.ts",
+    "move:price": "node --experimental-strip-types scripts/move-price.ts"
+  }
+}

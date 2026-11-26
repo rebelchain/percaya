@@ -1,0 +1,38 @@
+{
+  "expo": {
+    "name": "percaya",
+    "slug": "percaya",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "scheme": "percaya",
+    "userInterfaceStyle": "light",
+    "backgroundColor": "#F2F5F7",
+    "androidStatusBar": {
+      "backgroundColor": "#FFFFFF",
+      "barStyle": "dark-content"
+    },
+    "android": {
+      "package": "com.percaya.seeker",
+      "adaptiveIcon": {
+        "backgroundColor": "#1F6E9C"
+      },
+      "intentFilters": [
+        {
+          "action": "VIEW",
+          "autoVerify": true,
+          "data": [
+            {
+              "scheme": "https",
+              "host": "percaya.app",
+              "pathPrefix": "/c/"
+            },
+            {
+              "scheme": "percaya"
+            }
+          ],
+          "category": ["BROWSABLE", "DEFAULT"]
+        }
+      ]
+    }
+  }
+}

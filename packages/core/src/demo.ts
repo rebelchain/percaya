@@ -1,0 +1,566 @@
+import { computeTier } from './math.ts';
+import type {
+  AlertItem,
+  CallDetail,
+  CallerRecord,
+  ProtocolParams,
+  TokenInfo,
+} from './types.ts';
+
+const NOW = Math.floor(Date.now() / 1000);
+
+export const DEMO_PROTOCOL_PARAMS: ProtocolParams = {
+  minBondLamports: '200000000', // 0.20 SOL
+  minPoolLamports: '50000000', // 0.05 SOL
+  minWindowSec: 90,
+  maxWindowSec: 600,
+  buyGraceSec: 600,
+  minHoldSec: 180,
+  maxHoldSec: 1800,
+  checkpointGapSec: 45,
+  splitGraceSec: 600,
+  bondCooldownSec: 300,
+  minStopLossBps: 100,
+  maxStopLossBps: 9000,
+  minCallerBps: 500,
+  maxImpactBps: 200,
+  sellToleranceBps: 200,
+  keeperBps: 10,
+};
+
+export const DEMO_TOKENS: TokenInfo[] = [
+  {
+    mint: 'BonkDemo11111111111111111111111111111111111',
+    symbol: 'tBONK',
+    name: 'Testnet Bonk',
+    decimals: 6,
+    ammPool: 'PoolBonk11111111111111111111111111111111111',
+    allowed: true,
+    solReserveLamports: '250000000000', // 250 SOL -> ~5.11 SOL 2% impact cap
+    tokenReserveAtoms: '250000000000000',
+    feeBps: 30,
+  },
+  {
+    mint: 'WifDemo111111111111111111111111111111111111',
+    symbol: 'tWIF',
+    name: 'Testnet dogwifhat',
+    decimals: 6,
+    ammPool: 'PoolWif111111111111111111111111111111111111',
+    allowed: true,
+    solReserveLamports: '180000000000', // 180 SOL -> ~3.68 SOL 2% impact cap
+    tokenReserveAtoms: '90000000000000',
+    feeBps: 30,
+  },
+  {
+    mint: 'SkrDemo111111111111111111111111111111111111',
+    symbol: 'tSKR',
+    name: 'Testnet Seeker Ecosystem',
+    decimals: 6,
+    ammPool: 'PoolSkr111111111111111111111111111111111111',
+    allowed: true,
+    solReserveLamports: '400000000000', // 400 SOL -> ~8.18 SOL 2% impact cap
+    tokenReserveAtoms: '800000000000000',
+    feeBps: 30,
+  },
+];
+
+function makeCaller(raw: Omit<CallerRecord, 'avgNetBps' | 'tierInfo'>): CallerRecord {
+  const avgNetBps = raw.settled > 0 ? Math.trunc(raw.sumNetBps / raw.settled) : null;
+  const tierInfo = computeTier(raw, raw.genesisSlashed);
+  return { ...raw, avgNetBps, tierInfo };
+}
+
+export const DEMO_CALLERS: CallerRecord[] = [
+  makeCaller({
+    pubkey: '7bUd1Seeker111111111111111111111111111119fQp',
+    skrName: 'budi.skr',
+    genesisMint: 'GenBudi111111111111111111111111111111111111',
+    isSeekerVerified: true,
+    genesisSlashed: false,
+    bondLamports: '500000000', // 0.50 SOL -> Tier 2 (10x) = 5.00 SOL bond cap
+    withdrawReadyAt: 0,
+    settled: 12,
+    losses: 4,
+    negligent: 0,
+    refunded: 1,
+    split: 0,
+    slashes: 0,
+    active: 2,
+    lastActive: NOW - 120,
+    sumNetBps: 17040, // +14.20% avg net
+    slashHistory: [],
+  }),
+  makeCaller({
+    pubkey: '9rInaSeeker111111111111111111111111111114kLm',
+    skrName: 'rina.skr',
+    genesisMint: 'GenRina111111111111111111111111111111111111',
+    isSeekerVerified: true,
+    genesisSlashed: false,
+    bondLamports: '400000000', // 0.40 SOL -> Tier 1 (5x) = 2.00 SOL bond cap
+    withdrawReadyAt: 0,
+    settled: 4,
+    losses: 1,
+    negligent: 0,
+    refunded: 0,
+    split: 0,
+    slashes: 0,
+    active: 0,
+    lastActive: NOW - 1800,
+    sumNetBps: 3920, // +9.80% avg net
+    slashHistory: [],
+  }),
+  makeCaller({
+    pubkey: '4uNvErified111111111111111111111111111118xZa',
+    skrName: null,
+    genesisMint: null,
+    isSeekerVerified: false,
+    genesisSlashed: false,
+    bondLamports: '300000000', // 0.30 SOL -> Tier 0 (2x) = 0.60 SOL cap despite 5 wins
+    withdrawReadyAt: 0,
+    settled: 5,
+    losses: 1,
+    negligent: 0,
+    refunded: 0,
+    split: 0,
+    slashes: 0,
+    active: 0,
+    lastActive: NOW - 5400,
+    sumNetBps: 4100, // +8.20% avg net, still locked at Tier 0 until Genesis linked
+    slashHistory: [],
+  }),
+  makeCaller({
+    pubkey: '2sLaShedKey111111111111111111111111111113pQr',
+    skrName: 'doni.skr',
+    genesisMint: 'GenDoni111111111111111111111111111111111111',
+    isSeekerVerified: true,
+    genesisSlashed: true,
+    bondLamports: '200000000',
+    withdrawReadyAt: 0,
+    settled: 6,
+    losses: 3,
+    negligent: 1,
+    refunded: 1,
+    split: 0,
+    slashes: 1,
+    active: 0,
+    lastActive: NOW - 86400,
+    sumNetBps: -2400,
+    slashHistory: [
+      {
+        at: NOW - 86400,
+        amountLamports: '300000000',
+        reason:
+          'Wallet 8kPq…3nTx received 0.8 SOL directly from caller 7 min prior and bought tWIF 18 slots before Call #2 buy.',
+        txSig: '5sLashSigDemo111111111111111111111111111111111111111111111',
+      },
+    ],
+  }),
+];
+
+export const DEMO_CALLS: CallDetail[] = [
+  {
+    callId: 6,
+    pda: 'CallPda611111111111111111111111111111111111',
+    caller: DEMO_CALLERS[0].pubkey,
+    callerSkr: 'budi.skr',
+    callerSeekerVerified: true,
+    callerTier: 2,
+    callerSettled: 12,
+    callerLosses: 4,
+    callerAvgNetBps: 1420,
+    token: DEMO_TOKENS[0], // tBONK
+    state: 'Open',
+    settleReason: 'None',
+    openedAt: NOW - 120,
+    boughtAt: 0,
+    holdUntil: 0,
+    rules: {
+      ammPool: DEMO_TOKENS[0].ammPool,
+      windowEnd: NOW + 240, // 4 min remaining
+      buyDeadline: NOW + 840,
+      maxHoldSec: 900,
+      takeProfitBps: 2500, // +25%
+      stopLossBps: 1200, // -12%
+      shareBps: 1000, // 10%
+      minCallerBps: 500,
+      maxImpactBps: 200,
+      sellToleranceBps: 200,
+      keeperBps: 10,
+      checkpointGapSec: 45,
+      splitGraceSec: 600,
+      capLamports: '5000000000', // 5.00 SOL (10x of 0.50 SOL bond)
+      minPoolLamports: '50000000',
+    },
+    totalInLamports: '1450000000', // 1.45 SOL
+    callerStakeLamports: '250000000', // 0.25 SOL (17.2% >= 5%)
+    liveCapLamports: '5000000000',
+    depositorsCount: 4,
+    claimsLeft: 4,
+    tokensBoughtAtoms: '0',
+    prevCheckpoint: { valueLamports: '0', at: 0 },
+    lastCheckpoint: { valueLamports: '0', at: 0 },
+    liveQuoteLamports: null,
+    liveQuoteNetBps: null,
+    grossOutLamports: '0',
+    payoutLamports: '0',
+    feeLamports: '0',
+    claimedAmount: '0',
+    netReturnBps: null,
+    thesis:
+      'Spot volume compressed after Devnet bridge test; entering one pooled clip with a strict −12% floor and 15m max hold.',
+    positions: [
+      {
+        callId: 6,
+        participant: DEMO_CALLERS[0].pubkey,
+        skrName: 'budi.skr',
+        depositedLamports: '250000000',
+        claimed: false,
+        claimableAmount: '0',
+        isCaller: true,
+      },
+      {
+        callId: 6,
+        participant: DEMO_CALLERS[1].pubkey,
+        skrName: 'rina.skr',
+        depositedLamports: '500000000',
+        claimed: false,
+        claimableAmount: '0',
+        isCaller: false,
+      },
+      {
+        callId: 6,
+        participant: '6mJoinerA11111111111111111111111111111112pLw',
+        skrName: 'naya.skr',
+        depositedLamports: '400000000',
+        claimed: false,
+        claimableAmount: '0',
+        isCaller: false,
+      },
+      {
+        callId: 6,
+        participant: '8xJoinerB11111111111111111111111111111119vRt',
+        skrName: null,
+        depositedLamports: '300000000',
+        claimed: false,
+        claimableAmount: '0',
+        isCaller: false,
+      },
+    ],
+    earlyBuyers: [],
+    priceSeries: [],
+    buyTxSig: null,
+    sellTxSig: null,
+  },
+  {
+    callId: 5,
+    pda: 'CallPda511111111111111111111111111111111111',
+    caller: DEMO_CALLERS[0].pubkey,
+    callerSkr: 'budi.skr',
+    callerSeekerVerified: true,
+    callerTier: 2,
+    callerSettled: 12,
+    callerLosses: 4,
+    callerAvgNetBps: 1420,
+    token: DEMO_TOKENS[2], // tSKR
+    state: 'Holding',
+    settleReason: 'None',
+    openedAt: NOW - 720,
+    boughtAt: NOW - 360,
+    holdUntil: NOW + 540, // 9 min left in hold
+    rules: {
+      ammPool: DEMO_TOKENS[2].ammPool,
+      windowEnd: NOW - 420,
+      buyDeadline: NOW + 180,
+      maxHoldSec: 900,
+      takeProfitBps: 2000, // +20%
+      stopLossBps: 1500, // -15%
+      shareBps: 1000,
+      minCallerBps: 500,
+      maxImpactBps: 200,
+      sellToleranceBps: 200,
+      keeperBps: 10,
+      checkpointGapSec: 45,
+      splitGraceSec: 600,
+      capLamports: '5000000000',
+      minPoolLamports: '50000000',
+    },
+    totalInLamports: '2000000000', // 2.00 SOL
+    callerStakeLamports: '200000000', // 0.20 SOL (10%)
+    liveCapLamports: '5000000000',
+    depositorsCount: 3,
+    claimsLeft: 3,
+    tokensBoughtAtoms: '3960198019',
+    prevCheckpoint: { valueLamports: '2240000000', at: NOW - 75 }, // +12.0%
+    lastCheckpoint: { valueLamports: '2430000000', at: NOW - 20 }, // +21.5% (1 of 2 >= +20% TP!)
+    liveQuoteLamports: '2442000000',
+    liveQuoteNetBps: 2210,
+    grossOutLamports: '0',
+    payoutLamports: '0',
+    feeLamports: '0',
+    claimedAmount: '0',
+    netReturnBps: null,
+    thesis:
+      'Seeker Genesis ecosystem pairing liquidity test. Holding for +20% take-profit; one checkpoint already above target.',
+    positions: [
+      {
+        callId: 5,
+        participant: DEMO_CALLERS[0].pubkey,
+        skrName: 'budi.skr',
+        depositedLamports: '200000000',
+        claimed: false,
+        claimableAmount: '0',
+        isCaller: true,
+      },
+      {
+        callId: 5,
+        participant: DEMO_CALLERS[1].pubkey,
+        skrName: 'rina.skr',
+        depositedLamports: '1000000000',
+        claimed: false,
+        claimableAmount: '0',
+        isCaller: false,
+      },
+      {
+        callId: 5,
+        participant: '6mJoinerA11111111111111111111111111111112pLw',
+        skrName: 'naya.skr',
+        depositedLamports: '800000000',
+        claimed: false,
+        claimableAmount: '0',
+        isCaller: false,
+      },
+    ],
+    earlyBuyers: [
+      {
+        buyerPubkey: '3kOrganicSwap1111111111111111111111111118zWq',
+        skrName: null,
+        secondsBeforeBuy: 194,
+        solSpentLamports: '120000000',
+        fundedByCaller: false,
+        fundingTxSig: null,
+        swapTxSig: '2oRgSig1111111111111111111111111111111111111111',
+      },
+    ],
+    priceSeries: [
+      { at: NOW - 360, quoteMultipleBps: 9940 },
+      { at: NOW - 270, quoteMultipleBps: 10320 },
+      { at: NOW - 180, quoteMultipleBps: 10850 },
+      { at: NOW - 75, quoteMultipleBps: 11200 },
+      { at: NOW - 20, quoteMultipleBps: 12150 },
+    ],
+    buyTxSig: '4bUySigDemo511111111111111111111111111111111111',
+    sellTxSig: null,
+  },
+  {
+    // Exact Worked Example Profit (+26.88%) scaled cleanly to 10.00 SOL
+    callId: 4,
+    pda: 'CallPda411111111111111111111111111111111111',
+    caller: DEMO_CALLERS[1].pubkey,
+    callerSkr: 'rina.skr',
+    callerSeekerVerified: true,
+    callerTier: 1,
+    callerSettled: 4,
+    callerLosses: 1,
+    callerAvgNetBps: 980,
+    token: DEMO_TOKENS[0],
+    state: 'Settled',
+    settleReason: 'TakeProfit',
+    openedAt: NOW - 3600,
+    boughtAt: NOW - 3200,
+    holdUntil: NOW - 1400,
+    rules: {
+      ammPool: DEMO_TOKENS[0].ammPool,
+      windowEnd: NOW - 3300,
+      buyDeadline: NOW - 2700,
+      maxHoldSec: 1800,
+      takeProfitBps: 2500,
+      stopLossBps: 1500,
+      shareBps: 1000, // 10%
+      minCallerBps: 500,
+      maxImpactBps: 200,
+      sellToleranceBps: 200,
+      keeperBps: 10,
+      checkpointGapSec: 45,
+      splitGraceSec: 600,
+      capLamports: '12000000000',
+      minPoolLamports: '50000000',
+    },
+    totalInLamports: '10000000000', // 10.00 SOL
+    callerStakeLamports: '1000000000', // 1.00 SOL
+    liveCapLamports: '12000000000',
+    depositorsCount: 4,
+    claimsLeft: 1,
+    tokensBoughtAtoms: '9850000000',
+    prevCheckpoint: { valueLamports: '12950000000', at: NOW - 2160 },
+    lastCheckpoint: { valueLamports: '13020000000', at: NOW - 2105 },
+    liveQuoteLamports: null,
+    liveQuoteNetBps: null,
+    grossOutLamports: '13000000000', // 13.00 SOL
+    payoutLamports: '12688300000', // 12.6883 SOL
+    feeLamports: '298700000', // 0.2987 SOL
+    claimedAmount: '10150640000',
+    netReturnBps: 2688, // +26.88%
+    thesis:
+      'Breakout retest on tBONK with symmetric exit at +25% rule. Settled automatically by keeper after two spaced quotes.',
+    positions: [
+      {
+        callId: 4,
+        participant: DEMO_CALLERS[1].pubkey,
+        skrName: 'rina.skr',
+        depositedLamports: '1000000000',
+        claimed: true,
+        claimableAmount: '1567530000',
+        isCaller: true,
+      },
+      {
+        callId: 4,
+        participant: DEMO_CALLERS[0].pubkey,
+        skrName: 'budi.skr',
+        depositedLamports: '3000000000',
+        claimed: true,
+        claimableAmount: '3806490000',
+        isCaller: false,
+      },
+      {
+        callId: 4,
+        participant: '6mJoinerA11111111111111111111111111111112pLw',
+        skrName: 'naya.skr',
+        depositedLamports: '4000000000',
+        claimed: true,
+        claimableAmount: '5075320000',
+        isCaller: false,
+      },
+      {
+        callId: 4,
+        participant: '8xJoinerB11111111111111111111111111111119vRt',
+        skrName: null,
+        depositedLamports: '2000000000',
+        claimed: false,
+        claimableAmount: '2537660000',
+        isCaller: false,
+      },
+    ],
+    earlyBuyers: [],
+    priceSeries: [
+      { at: NOW - 3200, quoteMultipleBps: 9940 },
+      { at: NOW - 2800, quoteMultipleBps: 10900 },
+      { at: NOW - 2400, quoteMultipleBps: 12100 },
+      { at: NOW - 2160, quoteMultipleBps: 12950 },
+      { at: NOW - 2100, quoteMultipleBps: 13000 },
+    ],
+    buyTxSig: '4bUySigDemo411111111111111111111111111111111111',
+    sellTxSig: '5sEllSigDemo41111111111111111111111111111111111',
+  },
+  {
+    // Exact Worked Example Loss (-30.07%) — calm, identical layout apart from sign & color
+    callId: 3,
+    pda: 'CallPda311111111111111111111111111111111111',
+    caller: DEMO_CALLERS[0].pubkey,
+    callerSkr: 'budi.skr',
+    callerSeekerVerified: true,
+    callerTier: 2,
+    callerSettled: 12,
+    callerLosses: 4,
+    callerAvgNetBps: 1420,
+    token: DEMO_TOKENS[1], // tWIF
+    state: 'Settled',
+    settleReason: 'StopLoss',
+    openedAt: NOW - 7200,
+    boughtAt: NOW - 6800,
+    holdUntil: NOW - 5000,
+    rules: {
+      ammPool: DEMO_TOKENS[1].ammPool,
+      windowEnd: NOW - 6900,
+      buyDeadline: NOW - 6300,
+      maxHoldSec: 1800,
+      takeProfitBps: 3000,
+      stopLossBps: 2800, // -28%
+      shareBps: 1500, // 15% requested, 0 SOL charged because pool lost money
+      minCallerBps: 500,
+      maxImpactBps: 200,
+      sellToleranceBps: 200,
+      keeperBps: 10,
+      checkpointGapSec: 45,
+      splitGraceSec: 600,
+      capLamports: '10000000000',
+      minPoolLamports: '50000000',
+    },
+    totalInLamports: '1000000000', // 1.00 SOL
+    callerStakeLamports: '100000000', // 0.10 SOL
+    liveCapLamports: '3680000000',
+    depositorsCount: 2,
+    claimsLeft: 0,
+    tokensBoughtAtoms: '495000000',
+    prevCheckpoint: { valueLamports: '710000000', at: NOW - 5960 },
+    lastCheckpoint: { valueLamports: '702000000', at: NOW - 5905 },
+    liveQuoteLamports: null,
+    liveQuoteNetBps: null,
+    grossOutLamports: '700000000', // 0.70 SOL
+    payoutLamports: '699300000', // 0.6993 SOL (0 caller fee)
+    feeLamports: '0',
+    claimedAmount: '699300000',
+    netReturnBps: -3007, // −30.07%
+    thesis:
+      'Mean-reversion thesis invalidated as liquidity rotated out. Stop-loss met across two spaced checkpoints; zero caller fee taken.',
+    positions: [
+      {
+        callId: 3,
+        participant: DEMO_CALLERS[0].pubkey,
+        skrName: 'budi.skr',
+        depositedLamports: '100000000',
+        claimed: true,
+        claimableAmount: '69930000',
+        isCaller: true,
+      },
+      {
+        callId: 3,
+        participant: DEMO_CALLERS[1].pubkey,
+        skrName: 'rina.skr',
+        depositedLamports: '900000000',
+        claimed: true,
+        claimableAmount: '629370000',
+        isCaller: false,
+      },
+    ],
+    earlyBuyers: [],
+    priceSeries: [
+      { at: NOW - 6800, quoteMultipleBps: 9940 },
+      { at: NOW - 6400, quoteMultipleBps: 8800 },
+      { at: NOW - 6100, quoteMultipleBps: 7600 },
+      { at: NOW - 5960, quoteMultipleBps: 7100 },
+      { at: NOW - 5900, quoteMultipleBps: 7000 },
+    ],
+    buyTxSig: '4bUySigDemo311111111111111111111111111111111111',
+    sellTxSig: '5sEllSigDemo31111111111111111111111111111111111',
+  },
+];
+
+export const DEMO_ALERTS: AlertItem[] = [
+  {
+    id: 'al-1',
+    callId: 5,
+    kind: 'checkpoint_hit',
+    title: 'Checkpoint 1/2 above +20.00% on $tSKR',
+    body: 'Call #5 recorded 2.43 SOL sell quote (+21.50%). One more checkpoint in 45s unlocks permissionless sale.',
+    createdAt: NOW - 20,
+    read: false,
+  },
+  {
+    id: 'al-2',
+    callId: 6,
+    kind: 'call_opened',
+    title: 'budi.skr opened Call #6 on $tBONK',
+    body: 'Window open for 4m · 0.25 SOL caller stake locked · TP +25.00% · SL −12.00%.',
+    createdAt: NOW - 120,
+    read: false,
+  },
+  {
+    id: 'al-3',
+    callId: 4,
+    kind: 'pool_settled',
+    title: 'Call #4 settled at +26.88% net',
+    body: 'Take-profit met across two checkpoints. Pro-rata SOL claims are open.',
+    createdAt: NOW - 2100,
+    read: true,
+  },
+];

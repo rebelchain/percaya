@@ -1,0 +1,632 @@
+{
+  "address": "AzU89s97v6XKT8oKkyV82p2k17z1eK2aFhGwrXTpquxz",
+  "metadata": {
+    "name": "percaya_amm",
+    "version": "0.1.0",
+    "spec": "0.1.0",
+    "description": "Deterministic constant-product SOL <-> SPL AMM for percaya"
+  },
+  "instructions": [
+    {
+      "name": "add_liquidity",
+      "discriminator": [
+        181,
+        157,
+        89,
+        67,
+        143,
+        182,
+        52,
+        72
+      ],
+      "accounts": [
+        {
+          "name": "payer",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "amm_pool",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  97,
+                  109,
+                  109,
+                  95,
+                  112,
+                  111,
+                  111,
+                  108
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "amm_pool.token_mint",
+                "account": "AmmPool"
+              }
+            ]
+          }
+        },
+        {
+          "name": "amm_sol_vault",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  97,
+                  109,
+                  109,
+                  95,
+                  115,
+                  111,
+                  108
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "amm_pool"
+              }
+            ]
+          }
+        },
+        {
+          "name": "token_mint",
+          "relations": [
+            "amm_pool"
+          ]
+        },
+        {
+          "name": "token_vault",
+          "writable": true,
+          "relations": [
+            "amm_pool"
+          ]
+        },
+        {
+          "name": "payer_token_account",
+          "writable": true
+        },
+        {
+          "name": "token_program"
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "sol_amount",
+          "type": "u64"
+        },
+        {
+          "name": "token_amount",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "initialize_pool",
+      "discriminator": [
+        95,
+        180,
+        10,
+        172,
+        84,
+        174,
+        232,
+        40
+      ],
+      "accounts": [
+        {
+          "name": "authority",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "amm_pool",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  97,
+                  109,
+                  109,
+                  95,
+                  112,
+                  111,
+                  111,
+                  108
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "token_mint"
+              }
+            ]
+          }
+        },
+        {
+          "name": "amm_sol_vault",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  97,
+                  109,
+                  109,
+                  95,
+                  115,
+                  111,
+                  108
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "amm_pool"
+              }
+            ]
+          }
+        },
+        {
+          "name": "token_mint"
+        },
+        {
+          "name": "token_vault",
+          "writable": true
+        },
+        {
+          "name": "authority_token_account",
+          "writable": true
+        },
+        {
+          "name": "token_program"
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "fee_bps",
+          "type": "u16"
+        },
+        {
+          "name": "initial_sol",
+          "type": "u64"
+        },
+        {
+          "name": "initial_tokens",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "swap_exact_sol_for_tokens",
+      "discriminator": [
+        93,
+        88,
+        255,
+        84,
+        28,
+        17,
+        214,
+        130
+      ],
+      "accounts": [
+        {
+          "name": "payer",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "amm_pool",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  97,
+                  109,
+                  109,
+                  95,
+                  112,
+                  111,
+                  111,
+                  108
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "amm_pool.token_mint",
+                "account": "AmmPool"
+              }
+            ]
+          }
+        },
+        {
+          "name": "amm_sol_vault",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  97,
+                  109,
+                  109,
+                  95,
+                  115,
+                  111,
+                  108
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "amm_pool"
+              }
+            ]
+          }
+        },
+        {
+          "name": "token_mint",
+          "relations": [
+            "amm_pool"
+          ]
+        },
+        {
+          "name": "token_vault",
+          "writable": true,
+          "relations": [
+            "amm_pool"
+          ]
+        },
+        {
+          "name": "user_token_out",
+          "writable": true
+        },
+        {
+          "name": "token_program"
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "sol_in",
+          "type": "u64"
+        },
+        {
+          "name": "min_tokens_out",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "swap_exact_tokens_for_sol",
+      "discriminator": [
+        93,
+        249,
+        2,
+        40,
+        210,
+        20,
+        192,
+        158
+      ],
+      "accounts": [
+        {
+          "name": "authority",
+          "signer": true
+        },
+        {
+          "name": "sol_recipient",
+          "writable": true
+        },
+        {
+          "name": "amm_pool",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  97,
+                  109,
+                  109,
+                  95,
+                  112,
+                  111,
+                  111,
+                  108
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "amm_pool.token_mint",
+                "account": "AmmPool"
+              }
+            ]
+          }
+        },
+        {
+          "name": "amm_sol_vault",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  97,
+                  109,
+                  109,
+                  95,
+                  115,
+                  111,
+                  108
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "amm_pool"
+              }
+            ]
+          }
+        },
+        {
+          "name": "token_mint",
+          "relations": [
+            "amm_pool"
+          ]
+        },
+        {
+          "name": "token_vault",
+          "writable": true,
+          "relations": [
+            "amm_pool"
+          ]
+        },
+        {
+          "name": "user_token_in",
+          "writable": true
+        },
+        {
+          "name": "token_program"
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "token_in",
+          "type": "u64"
+        },
+        {
+          "name": "min_sol_out",
+          "type": "u64"
+        }
+      ]
+    }
+  ],
+  "accounts": [
+    {
+      "name": "AmmPool",
+      "discriminator": [
+        54,
+        82,
+        185,
+        138,
+        179,
+        191,
+        211,
+        169
+      ]
+    }
+  ],
+  "events": [
+    {
+      "name": "AmmPoolInitialized",
+      "discriminator": [
+        255,
+        235,
+        207,
+        141,
+        175,
+        193,
+        197,
+        90
+      ]
+    },
+    {
+      "name": "AmmSwapped",
+      "discriminator": [
+        221,
+        103,
+        73,
+        138,
+        121,
+        99,
+        83,
+        229
+      ]
+    }
+  ],
+  "errors": [
+    {
+      "code": 6000,
+      "name": "InvalidFeeBps",
+      "msg": "Fee basis points must be below 1000 (10%)"
+    },
+    {
+      "code": 6001,
+      "name": "ZeroAmount",
+      "msg": "Initial and swap amounts must be strictly positive"
+    },
+    {
+      "code": 6002,
+      "name": "InvalidVaultAccount",
+      "msg": "Token vault mint or owner does not match AMM pool PDA"
+    },
+    {
+      "code": 6003,
+      "name": "SlippageExceeded",
+      "msg": "Swap output fell below minimum slippage guard"
+    },
+    {
+      "code": 6004,
+      "name": "InsufficientLiquidity",
+      "msg": "Insufficient pool liquidity for requested swap"
+    },
+    {
+      "code": 6005,
+      "name": "MathOverflow",
+      "msg": "Arithmetic overflow or division by zero in AMM math"
+    },
+    {
+      "code": 6006,
+      "name": "EmptyReserves",
+      "msg": "Pool reserves are empty"
+    },
+    {
+      "code": 6007,
+      "name": "UnsupportedTokenProgram",
+      "msg": "Unsupported SPL token program"
+    },
+    {
+      "code": 6008,
+      "name": "InvalidMintAccount",
+      "msg": "Invalid or uninitialized SPL mint account"
+    },
+    {
+      "code": 6009,
+      "name": "InvalidTokenAccount",
+      "msg": "Invalid or uninitialized SPL token account"
+    }
+  ],
+  "types": [
+    {
+      "name": "AmmPool",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "authority",
+            "type": "pubkey"
+          },
+          {
+            "name": "token_mint",
+            "type": "pubkey"
+          },
+          {
+            "name": "token_vault",
+            "type": "pubkey"
+          },
+          {
+            "name": "token_decimals",
+            "type": "u8"
+          },
+          {
+            "name": "fee_bps",
+            "type": "u16"
+          },
+          {
+            "name": "sol_reserve",
+            "type": "u64"
+          },
+          {
+            "name": "token_reserve",
+            "type": "u64"
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          },
+          {
+            "name": "sol_vault_bump",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "AmmPoolInitialized",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "pool",
+            "type": "pubkey"
+          },
+          {
+            "name": "token_mint",
+            "type": "pubkey"
+          },
+          {
+            "name": "sol_reserve",
+            "type": "u64"
+          },
+          {
+            "name": "token_reserve",
+            "type": "u64"
+          },
+          {
+            "name": "fee_bps",
+            "type": "u16"
+          }
+        ]
+      }
+    },
+    {
+      "name": "AmmSwapped",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "pool",
+            "type": "pubkey"
+          },
+          {
+            "name": "trader",
+            "type": "pubkey"
+          },
+          {
+            "name": "is_buy",
+            "type": "bool"
+          },
+          {
+            "name": "sol_amount",
+            "type": "u64"
+          },
+          {
+            "name": "token_amount",
+            "type": "u64"
+          },
+          {
+            "name": "sol_reserve_after",
+            "type": "u64"
+          },
+          {
+            "name": "token_reserve_after",
+            "type": "u64"
+          }
+        ]
+      }
+    }
+  ]
+}

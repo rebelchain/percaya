@@ -1,11 +1,13 @@
 import { transact } from '@solana-mobile/mobile-wallet-adapter-protocol-web3js';
-import { PublicKey, VersionedTransaction } from '@solana/web3.js';
+import { Connection, PublicKey, VersionedTransaction } from '@solana/web3.js';
 
 export const APP_IDENTITY = {
   name: 'percaya',
   uri: 'https://percaya.app',
   icon: 'favicon.ico',
 };
+
+const DEVNET_RPC = 'https://api.devnet.solana.com';
 
 export interface SeekerSession {
   pubkey: string;
@@ -83,7 +85,9 @@ export async function connectSeekerWallet(apiBaseUrl: string): Promise<SeekerSes
 }
 
 /**
- * Signs and dispatches a VersionedTransaction through Seed Vault / MWA 2.0.
+ * Signs a VersionedTransaction via Seed Vault / MWA 2.0 (`signTransactions`) and
+ * broadcasts directly to Solana Devnet RPC. Using `signTransactions` avoids Solflare's
+ * Android MWA WebSocket `CancellationException` timeout during internal wallet broadcast.
  */
 export async function signAndSendViaSeedVault(
   serializedTxBase64: string,
@@ -92,16 +96,26 @@ export async function signAndSendViaSeedVault(
   const rawBytes = Uint8Array.from(atob(serializedTxBase64), (c) => c.charCodeAt(0));
   const tx = VersionedTransaction.deserialize(rawBytes);
 
-  const signatures = await transact(async (wallet) => {
+  const signedTxs = await transact(async (wallet) => {
     if (mwaAuthToken) {
-      await wallet.reauthorize({ auth_token: mwaAuthToken, identity: APP_IDENTITY });
+      await wallet.authorize({
+        auth_token: mwaAuthToken,
+        chain: 'solana:devnet',
+        identity: APP_IDENTITY,
+      });
     } else {
-      await wallet.authorize({ cluster: 'devnet', identity: APP_IDENTITY });
+      await wallet.authorize({ chain: 'solana:devnet', identity: APP_IDENTITY });
     }
-    return wallet.signAndSendTransactions({
+    return wallet.signTransactions({
       transactions: [tx],
     });
   });
 
-  return signatures[0];
+  const conn = new Connection(DEVNET_RPC, 'confirmed');
+  const sig = await conn.sendRawTransaction(signedTxs[0].serialize(), {
+    skipPreflight: false,
+    maxRetries: 5,
+  });
+  await conn.confirmTransaction(sig, 'confirmed');
+  return sig;
 }

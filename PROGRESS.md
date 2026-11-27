@@ -27,10 +27,11 @@ Living execution tracker for **Dev3pack Global Hackathon (27–29 Nov 2026)**.
 - [x] Seed `GlobalConfig` (`F559AB2MjAZModvfDw9oqqpy8gNEuS3AFYZbFTii8aa7`), 3 SPL tokens (`tBONK`, `tWIF`, `tSKR`) + 3 AMM pools, and Token-2022 `NonTransferable` Seeker Genesis NFT (`GsRTNhTYJg4RG7NgJ8enT1wGAvEfghhchjy25f8WmBLL`)
 - [x] Verify live `scripts/move-price.ts` swap against Devnet `$tBONK` AMM (`tx: 2wwPbx8G...`)
 
-## Phase 4: Live Chain Mode (`DATA=chain`) — Indexer, Keeper & Mobile Tx Wiring (NEXT)
-- [ ] Implement `apps/api/src/indexer.ts` (Anchor PDA + log polling into store) and `apps/api/src/keeper.ts` (simulate + send `checkpoint`, `sell`, `refund`, `split`)
-- [ ] Wire `apps/mobile` to read live calls/replies from `API_BASE` and build/sign real Devnet Anchor transactions (`open_call`, `deposit`, `buy`, `checkpoint`, `sell`, `claim`, `verify_seeker_genesis`) via MWA 2.0
-- [ ] Install Solana Mobile Seed Vault Simulator / FakeWallet APK onto Emulator via `adb install` and verify end-to-end biometric/PIN signing
+## Phase 4: Live Chain Mode (`DATA=chain`) — Indexer, Keeper & Mobile Tx Wiring (IN PROGRESS)
+- [x] Implement `apps/api/src/devnet-sync.ts` (live Anchor PDA Indexer + simulating Auto-Keeper for `checkpoint`, `sell`, `refund`, `split`)
+- [x] Open live Devnet Call #1 (`tx: 3tJumYzk…`) & verify `DATA=chain` decoding (`$tBONK`, `callerSeekerVerified: true`, `liveCapLamports`)
+- [x] Wire `apps/mobile` to poll live `API_BASE` (`● Devnet Live` badge + pull-to-refresh + MWA 2.0 `signAndSendViaSeedVault`)
+- [ ] Install Solana Mobile Seed Vault Simulator / FakeWallet APK onto Emulator via `adb install` and verify live biometric/PIN signing
 
 ## Phase 5: Polish, Mas Youvandra Review & Final Submission
 - [ ] Add Thread Replies & live `DATA=chain` updates to `apps/web`

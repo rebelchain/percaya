@@ -30,16 +30,22 @@ export interface PercayaStore {
   getSubscriptions(pubkey: string): { following: string[]; watching: number[] };
   emitAlert(alert: AlertItem): void;
   onAlert(listener: (alert: AlertItem) => void): () => void;
+  replaceChainState(next: {
+    tokens: TokenInfo[];
+    callers: CallerRecord[];
+    calls: CallDetail[];
+  }): void;
 }
 
 export function createPercayaStore(mode: 'demo' | 'chain' = 'demo'): PercayaStore {
+  let tokens: TokenInfo[] = structuredClone(DEMO_TOKENS);
   const calls = new Map<number, CallDetail>(
-    structuredClone(DEMO_CALLS).map((c) => [c.callId, c]),
+    mode === 'demo' ? structuredClone(DEMO_CALLS).map((c) => [c.callId, c]) : [],
   );
   const callers = new Map<string, CallerRecord>(
-    structuredClone(DEMO_CALLERS).map((c) => [c.pubkey, c]),
+    mode === 'demo' ? structuredClone(DEMO_CALLERS).map((c) => [c.pubkey, c]) : [],
   );
-  const alerts: AlertItem[] = structuredClone(DEMO_ALERTS);
+  const alerts: AlertItem[] = mode === 'demo' ? structuredClone(DEMO_ALERTS) : [];
   const followsByUser = new Map<string, Set<string>>();
   const watchesByUser = new Map<string, Set<number>>();
   const bus = new EventEmitter();
@@ -49,7 +55,7 @@ export function createPercayaStore(mode: 'demo' | 'chain' = 'demo'): PercayaStor
     getConfig() {
       return {
         params: DEMO_PROTOCOL_PARAMS,
-        tokens: DEMO_TOKENS,
+        tokens,
       };
     },
     listCalls(filter) {
@@ -163,6 +169,23 @@ export function createPercayaStore(mode: 'demo' | 'chain' = 'demo'): PercayaStor
       return () => {
         bus.off('alert', listener);
       };
+    },
+    replaceChainState(next) {
+      if (next.tokens.length > 0) {
+        tokens = next.tokens;
+      }
+      callers.clear();
+      for (const c of next.callers) {
+        callers.set(c.pubkey, c);
+      }
+      const existingReplies = new Map<number, ThreadReply[]>();
+      for (const [id, existing] of calls) {
+        existingReplies.set(id, existing.replies);
+      }
+      calls.clear();
+      for (const c of next.calls) {
+        calls.set(c.callId, { ...c, replies: existingReplies.get(c.callId) ?? c.replies });
+      }
     },
   };
 }

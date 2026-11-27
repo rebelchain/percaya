@@ -14,11 +14,12 @@ import {
 } from '@percaya/core';
 import * as Haptics from 'expo-haptics';
 import { StatusBar } from 'expo-status-bar';
-import React, { useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   Alert,
   Modal,
   Pressable,
+  RefreshControl,
   SafeAreaView,
   ScrollView,
   Share,
@@ -82,6 +83,61 @@ export default function App() {
   const [calls, setCalls] = useState<CallDetail[]>(
     () => JSON.parse(JSON.stringify(DEMO_CALLS)) as CallDetail[],
   );
+  const [callers, setCallers] = useState<CallerRecord[]>(
+    () => JSON.parse(JSON.stringify(DEMO_CALLERS)) as CallerRecord[],
+  );
+  const [apiMode, setApiMode] = useState<'demo' | 'chain' | 'offline'>('offline');
+  const [refreshing, setRefreshing] = useState(false);
+
+  const fetchLiveFeed = useCallback(async () => {
+    try {
+      const [healthRes, callsRes, callersRes] = await Promise.all([
+        fetch(`${API_BASE}/api/health`),
+        fetch(`${API_BASE}/api/calls`),
+        fetch(`${API_BASE}/api/callers`),
+      ]);
+      if (healthRes.ok) {
+        const h = (await healthRes.json()) as { mode?: 'demo' | 'chain' };
+        setApiMode(h.mode === 'chain' ? 'chain' : 'demo');
+      }
+      if (callsRes.ok) {
+        const data = (await callsRes.json()) as { calls?: CallDetail[] };
+        if (data.calls && data.calls.length > 0) {
+          const detailed = await Promise.all(
+            data.calls.slice(0, 12).map(async (c) => {
+              const r = await fetch(`${API_BASE}/api/calls/${c.callId}`);
+              if (r.ok) {
+                const d = (await r.json()) as { call?: CallDetail };
+                if (d.call) return d.call;
+              }
+              return { ...c, positions: [], earlyBuyers: [], priceSeries: [], replies: [], buyTxSig: null, sellTxSig: null };
+            }),
+          );
+          setCalls(detailed);
+        }
+      }
+      if (callersRes.ok) {
+        const cd = (await callersRes.json()) as { callers?: CallerRecord[] };
+        if (cd.callers && cd.callers.length > 0) {
+          setCallers(cd.callers);
+        }
+      }
+    } catch {
+      setApiMode('offline');
+    }
+  }, []);
+
+  useEffect(() => {
+    void fetchLiveFeed();
+    const timer = setInterval(() => void fetchLiveFeed(), 15_000);
+    return () => clearInterval(timer);
+  }, [fetchLiveFeed]);
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await fetchLiveFeed();
+    setRefreshing(false);
+  };
   const [selectedCallId, setSelectedCallId] = useState<number | null>(null);
   const [selectedCaller, setSelectedCaller] = useState<CallerRecord | null>(null);
   const [callerProfileTab, setCallerProfileTab] = useState<ProfileTab>('calls');
@@ -257,7 +313,13 @@ export default function App() {
           </View>
           <Text style={styles.wordmark}>percaya</Text>
           <View style={styles.seekerChip}>
-            <Text style={styles.seekerChipText}>Threads · Seeker</Text>
+            <Text style={styles.seekerChipText}>
+              {apiMode === 'chain'
+                ? '● Devnet Live'
+                : apiMode === 'demo'
+                  ? '● API Demo'
+                  : 'Threads · Seeker'}
+            </Text>
           </View>
         </View>
 
@@ -292,7 +354,10 @@ export default function App() {
         </View>
       )}
 
-      <ScrollView contentContainerStyle={styles.scrollContent}>
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+      >
         {tab === 'home' && (
           <>
             {/* Compact Status Strip */}
@@ -339,7 +404,7 @@ export default function App() {
                   <View style={styles.threadLeftGutter}>
                     <Pressable
                       onPress={() => {
-                        const found = DEMO_CALLERS.find((c) => c.pubkey === call.caller) ?? null;
+                        const found = callers.find((c) => c.pubkey === call.caller) ?? null;
                         setSelectedCaller(found);
                       }}
                       style={[styles.avatarCircle, { backgroundColor: avatarColor(call.caller) }]}
@@ -357,7 +422,7 @@ export default function App() {
                     <View style={styles.rowBetween}>
                       <Pressable
                         onPress={() => {
-                          const found = DEMO_CALLERS.find((c) => c.pubkey === call.caller) ?? null;
+                          const found = callers.find((c) => c.pubkey === call.caller) ?? null;
                           setSelectedCaller(found);
                         }}
                         style={styles.rowLeft}
@@ -568,7 +633,7 @@ export default function App() {
               <Text style={styles.sectionTitle}>Callers directory</Text>
               <Text style={styles.noRankingCaption}>By last activity · No ranking</Text>
             </View>
-            {DEMO_CALLERS.map((c) => {
+            {callers.map((c) => {
               const isFol = following.includes(c.pubkey);
               return (
                 <Pressable
@@ -857,7 +922,10 @@ export default function App() {
               </Pressable>
             </View>
 
-            <ScrollView contentContainerStyle={styles.scrollContent}>
+            <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+      >
               <View style={styles.card}>
                 <View style={styles.rowBetween}>
                   <Text style={styles.callerName}>
@@ -1015,7 +1083,10 @@ export default function App() {
               </Pressable>
             </View>
 
-            <ScrollView contentContainerStyle={styles.scrollContent}>
+            <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+      >
               <View style={styles.card}>
                 <View style={styles.rowBetween}>
                   <View>

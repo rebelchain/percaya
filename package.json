@@ -12,6 +12,7 @@
     "build:programs": "anchor build",
     "test:programs": "cargo test",
     "dev:api": "npm --workspace @percaya/api run dev",
+    "dev:api:chain": "DATA=chain npm --workspace @percaya/api run dev",
     "dev:web": "npm --workspace @percaya/web run dev",
     "dev:mobile": "npm --workspace @percaya/mobile run start",
     "test:api": "npm --workspace @percaya/api run test",

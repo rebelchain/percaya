@@ -11,8 +11,19 @@
       "backgroundColor": "#FFFFFF",
       "barStyle": "dark-content"
     },
+    "plugins": [
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "percaya uses the camera only to scan Call QR codes. Nothing is recorded or uploaded.",
+          "recordAudioAndroid": false
+        }
+      ],
+      "expo-notifications"
+    ],
     "android": {
       "package": "com.percaya.seeker",
+      "permissions": ["android.permission.CAMERA", "android.permission.POST_NOTIFICATIONS"],
       "adaptiveIcon": {
         "backgroundColor": "#1F6E9C"
       },

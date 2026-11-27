@@ -14,7 +14,7 @@ import {
 } from '@percaya/core';
 import * as Haptics from 'expo-haptics';
 import { StatusBar } from 'expo-status-bar';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Alert,
   Modal,
@@ -31,6 +31,9 @@ import {
   View,
 } from 'react-native';
 import { useMobileWallet } from './src/hooks/useMobileWallet';
+import { CallQrModal, CallScannerModal } from './src/components/CallQr';
+import { diffCallStates } from './src/call-diff';
+import { ensureNotificationPermission, notifyNow } from './src/notifications';
 import {
   buildDepositTxDirect,
   buildOpenCallTxDirect,
@@ -216,6 +219,20 @@ export default function App() {
 
   const [following, setFollowing] = useState<string[]>([DEMO_CALLERS[0].pubkey]);
   const [watching, setWatching] = useState<number[]>([6, 5]);
+  const [scannerOpen, setScannerOpen] = useState(false);
+  const [qrCallId, setQrCallId] = useState<number | null>(null);
+  const prevCallsRef = useRef<Pick<CallDetail, 'callId' | 'state'>[]>([]);
+
+  // Native Android notification when a watched / joined call changes on-chain state.
+  useEffect(() => {
+    const prev = prevCallsRef.current;
+    if (prev.length > 0) {
+      for (const n of diffCallStates(prev, calls, watching)) {
+        void notifyNow(n.title, n.body, n.callId);
+      }
+    }
+    prevCallsRef.current = calls.map((c) => ({ callId: c.callId, state: c.state }));
+  }, [calls, watching]);
   const [replyDraft, setReplyDraft] = useState('');
   const [depositSol, setDepositSol] = useState<string>('0.005');
   const [busy, setBusy] = useState(false);
@@ -271,9 +288,23 @@ export default function App() {
 
   const toggleWatch = (callId: number) => {
     void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    const adding = !watching.includes(callId);
     setWatching((prev) =>
       prev.includes(callId) ? prev.filter((id) => id !== callId) : [...prev, callId],
     );
+    if (adding) void ensureNotificationPermission();
+  };
+
+  const handleCallScanned = (callId: number) => {
+    setScannerOpen(false);
+    if (calls.some((c) => c.callId === callId)) {
+      setSelectedCallId(callId);
+    } else {
+      Alert.alert(
+        `Call #${callId} not loaded yet`,
+        'Pull to refresh on Home to sync the latest Devnet pools, then scan again.',
+      );
+    }
   };
 
   const handleSeedVaultDeposit = async (call: CallDetail) => {
@@ -322,6 +353,8 @@ export default function App() {
       }
       const sig = await signAndSend(txBase64);
       void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      setWatching((prev) => (prev.includes(call.callId) ? prev : [...prev, call.callId]));
+      void ensureNotificationPermission();
       Alert.alert('Deposited on Solana Devnet', `Signature: ${sig.slice(0, 18)}…`);
       void fetchLiveFeed();
     } catch (err) {
@@ -537,19 +570,31 @@ export default function App() {
           </View>
         </View>
 
-        <Pressable
-          style={styles.walletBtn}
-          onPress={session ? () => setTab('profile') : handleConnectMwa}
-          disabled={busy || connecting}
-        >
-          <Text style={styles.walletBtnText}>
-            {connecting
-              ? 'Connecting…'
-              : session
-                ? displayIdentity(session.pubkey, session.skrName)
-                : 'Sign in'}
-          </Text>
-        </Pressable>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+          <Pressable
+            style={[styles.walletBtn, { backgroundColor: C.accentFill }]}
+            onPress={() => {
+              void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              setScannerOpen(true);
+            }}
+            accessibilityLabel="Scan a Call QR code"
+          >
+            <Text style={[styles.walletBtnText, { color: C.accentDeep }]}>Scan</Text>
+          </Pressable>
+          <Pressable
+            style={styles.walletBtn}
+            onPress={session ? () => setTab('profile') : handleConnectMwa}
+            disabled={busy || connecting}
+          >
+            <Text style={styles.walletBtnText}>
+              {connecting
+                ? 'Connecting…'
+                : session
+                  ? displayIdentity(session.pubkey, session.skrName)
+                  : 'Sign in'}
+            </Text>
+          </Pressable>
+        </View>
       </View>
 
       {/* For You (Newest) / Following Tabs on Home */}
@@ -1188,6 +1233,17 @@ export default function App() {
         ))}
       </View>
 
+      <CallScannerModal
+        visible={scannerOpen}
+        onClose={() => setScannerOpen(false)}
+        onCallScanned={handleCallScanned}
+      />
+      <CallQrModal
+        callId={qrCallId}
+        symbol={calls.find((c) => c.callId === qrCallId)?.token.symbol}
+        onClose={() => setQrCallId(null)}
+      />
+
       {/* Thread Detail + Replies Modal */}
       <Modal
         visible={activeDetail !== null}
@@ -1200,9 +1256,14 @@ export default function App() {
               <Pressable onPress={() => setSelectedCallId(null)}>
                 <Text style={styles.callerName}>← Thread</Text>
               </Pressable>
-              <Pressable onPress={() => handleShareBlink(activeDetail)}>
-                <Text style={[styles.callerName, { color: C.accent }]}>↗ Share Blink</Text>
-              </Pressable>
+              <View style={{ flexDirection: 'row', gap: 16 }}>
+                <Pressable onPress={() => setQrCallId(activeDetail.callId)}>
+                  <Text style={[styles.callerName, { color: C.accent }]}>QR</Text>
+                </Pressable>
+                <Pressable onPress={() => handleShareBlink(activeDetail)}>
+                  <Text style={[styles.callerName, { color: C.accent }]}>↗ Share Blink</Text>
+                </Pressable>
+              </View>
             </View>
 
             <ScrollView

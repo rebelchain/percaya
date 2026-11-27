@@ -66,8 +66,10 @@ type FeedMode = 'newest' | 'following';
 type ProfileTab = 'calls' | 'record' | 'slashes';
 
 const PUBLIC_API_ENV = process.env.EXPO_PUBLIC_API_URL?.trim();
+const DEFAULT_PUBLIC_API = 'https://percaya.duckdns.org';
 const API_CANDIDATES = [
   ...(PUBLIC_API_ENV ? [PUBLIC_API_ENV.replace(/\/$/, '')] : []),
+  DEFAULT_PUBLIC_API,
   'http://127.0.0.1:8787',
   'http://10.0.2.2:8787',
 ];
@@ -406,7 +408,7 @@ export default function App() {
   const handleShareBlink = async (call: CallDetail) => {
     void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     await Share.share({
-      message: `percaya Call #${call.callId} on $${call.token.symbol} by ${displayIdentity(call.caller, call.callerSkr)} — One buy, one sale, fixed rules: https://percaya.app/c/${call.callId}`,
+      message: `percaya Call #${call.callId} on $${call.token.symbol} by ${displayIdentity(call.caller, call.callerSkr)} — One buy, one sale, fixed rules: https://percaya.duckdns.org/c/${call.callId}`,
     });
   };
 

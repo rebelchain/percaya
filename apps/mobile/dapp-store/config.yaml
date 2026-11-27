@@ -1,17 +1,17 @@
 # Solana Mobile dApp Store CLI configuration (npx @solana-mobile/dapp-store-cli)
 publisher:
   name: percaya
-  website: https://percaya.app
+  website: https://percaya.duckdns.org
   email: team@percaya.app
 
 app:
   name: percaya
   android_package: com.percaya.seeker
   urls:
-    license_url: https://percaya.app/terms
-    copyright_url: https://percaya.app/terms
-    privacy_policy_url: https://percaya.app/privacy
-    website: https://percaya.app
+    license_url: https://percaya.duckdns.org/terms
+    copyright_url: https://percaya.duckdns.org/terms
+    privacy_policy_url: https://percaya.duckdns.org/privacy
+    website: https://percaya.duckdns.org
 
 release:
   address: ''

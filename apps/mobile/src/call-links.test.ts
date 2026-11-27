@@ -5,6 +5,8 @@ import { buildCallDeepLink, buildCallWebLink, parseCallIdFromLink } from './call
 test('call links round-trip through the parser', () => {
   assert.equal(parseCallIdFromLink(buildCallDeepLink(3)), 3);
   assert.equal(parseCallIdFromLink(buildCallWebLink(12)), 12);
+  assert.equal(parseCallIdFromLink('https://percaya.app/c/9'), 9);
+  assert.equal(parseCallIdFromLink('https://percaya.duckdns.org/c/14'), 14);
   assert.equal(parseCallIdFromLink('  percaya://c/7?src=qr '), 7);
 });
 

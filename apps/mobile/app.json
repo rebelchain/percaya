@@ -34,6 +34,11 @@
           "data": [
             {
               "scheme": "https",
+              "host": "percaya.duckdns.org",
+              "pathPrefix": "/c/"
+            },
+            {
+              "scheme": "https",
               "host": "percaya.app",
               "pathPrefix": "/c/"
             },

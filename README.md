@@ -52,7 +52,7 @@ Call groups on Telegram and X move millions in Solana tokens with zero consequen
 Crypto calls happen on phones, inside mobile chat feeds, with windows measured in minutes. Adapting pooled accountability to **Solana Mobile Seeker** solves three problems at once:
 
 1. **No free shilling (`Call-as-a-Thread`).** The mobile app follows the familiar 5-tab **Threads** pattern (`Home`, `Callers`, `+ Post`, `Activity`, `Profile`) with `For you (Newest)` and `Following` feeds—except **you cannot publish a root post without locking SOL in an on-chain pool**. Inside any thread, replies signed via SIWS automatically display whether the commenter actually put SOL in (`In Pool · 0.50 SOL`) or is watching from the sidelines (`Spectator`).
-2. **Closing burner-wallet resets (`Seeker Genesis Token` + `GenesisRegistry` PDA).** On standard chains, a ruined caller spins up a fresh keypair for free. In `percaya`, Tiers 1–3 (`5×` to `20×` bond cap) require binding a 1-per-device **Token-2022 `NonTransferable` Seeker Genesis NFT** into a one-time `init` `GenesisRegistry` PDA (`[b"genesis", genesis_mint]`). One physical device maps to one permanent track record; a slash taints that Genesis Token permanently. Unverified wallets remain capped at Tier 0 (`2×` bond, `5%` max fee) and are labelled openly.
+2. **Closing burner-wallet resets (`Seeker Genesis Token` + `GenesisRegistry` PDA).** On standard chains, a ruined caller spins up a fresh keypair for free. Even on Seeker, a user can move their Seeker Genesis Token (SGT) between internal Seed Vault sub-accounts while the SGT's **mint address stays identical**. In `percaya`, Tiers 1–3 (`5×` to `20×` bond cap) require binding that 1-per-device **Token-2022 Seeker Genesis NFT** into a one-time `init` `GenesisRegistry` PDA keyed by **`[b"genesis", genesis_mint]`** (not merely the wallet address). One physical device maps to one permanent track record; a slash taints that `genesis_mint` permanently. Unverified wallets remain capped at Tier 0 (`2×` bond, `5%` max fee) and are labelled openly (tap any tier pill in the app to inspect its cap rules).
 3. **Built for the phone in your pocket (`Camera QR` + `Android Push` + `MWA 2.0` + `Solana Blinks`).** Every call exposes an in-app **SVG QR code** (`percaya://c/:id`) that other Seeker/Android phones can scan directly via the built-in **`expo-camera` QR scanner**, native **Android push notifications** (`expo-notifications`) when watched or joined pools buy/settle/refund/split, and a Solana Action endpoint (`/actions.json` + `/api/actions/call/:id`) so followers sign deposits via **Mobile Wallet Adapter 2.0** (Seed Vault, Solflare, Phantom, or Fake Wallet) — even on a cold-installed APK with zero local backend via our on-device Devnet RPC engine (`chain-direct.ts`).
 
 ---
@@ -197,11 +197,11 @@ No local backend or `adb reverse` is required to evaluate the Android APK:
    curl -fSL -o percaya-v0.1.0-devnet.apk https://github.com/rebelchain/percaya/releases/download/v0.1.0/percaya-v0.1.0-devnet.apk
    adb install -r percaya-v0.1.0-devnet.apk
    ```
-2. **Cold boot → `● Devnet Live`:** The app automatically reads live `CallPool`, `CallerRecord`, `Position`, and `AmmPool` PDAs directly from `https://api.devnet.solana.com` via `apps/mobile/src/chain-direct.ts`.
+2. **First-launch Welcome Guide & 4-Step Interactive Checklist:** On cold boot, a calm 3-point guide introduces the mechanics (re-openable anytime via **`?`** in the header) alongside an interactive **Getting Started (0/4)** card at the top of `Home` while live PDAs load (`● Devnet Live`).
 3. **Connect via MWA 2.0:** Tap **`Sign in`** (supports 1-prompt SIWS and automatically falls back to standard `authorize` for Fake Wallet).
-4. **0-SOL Wallet? Tap `Claim Judge Test SOL`:** If your test wallet holds `< 0.06 SOL`, a calm banner at the top of `Home` (and in `Profile`) lets you fund `+0.08 Devnet SOL` in one tap.
+4. **1-Tap `Claim Judge Test SOL` + Live `Verify Seeker Genesis`:** Fund `+0.08 Devnet SOL` if your wallet holds `< 0.06 SOL`, then tap **`Verify SGT`** (in the checklist or `Profile` tab) to mint & bind a real Token-2022 `NonTransferable` Seeker Genesis NFT to `GenesisRegistry` on Solana Devnet in one MWA swipe.
 5. **Sign on Devnet + Test Native Phone Features:**
-   - Tap **`+ Post`** to open an immutable pooled call (auto-bundles `register_caller + post_bond + open_call` in 1 MWA prompt) or join an `Open` pool.
+   - Tap **`+ Post`** to open an immutable pooled call on `$tBONK`, `$tWIF`, or `$tSKR` (auto-bundles `register_caller + post_bond + open_call` in 1 MWA prompt) or join an `Open` pool.
    - Tap **`QR`** inside any Call thread to display its scannable `percaya://c/:id` QR code, or tap **`Scan`** in the top bar to scan `docs/assets/qr-call-3.png` with the native camera.
    - Tap **`🔔 Watch`** on any call to enable native Android system notifications when its on-chain state transitions.
 
@@ -251,15 +251,15 @@ cargo test
 # 2. Shared fixed-point math & settlement invariants — 6/6 tests
 node --experimental-strip-types --test packages/core/src/math.test.ts
 
-# 3. API, SIWS Ed25519, Thread Replies & Solana Blinks — 3/3 tests
+# 3. API, SIWS Ed25519, Thread Replies, SGT Issuance & Solana Blinks — 4/4 tests
 npm run test:api
 
-# 4. Mobile QR link parser & watched-call notification diff — 6/6 tests
-npm --workspace @percaya/mobile run test
+# 4. Mobile QR parser, notification diff, onboarding checklist & release signing — 10/10 tests
+(cd apps/mobile && npm run test)
 
 # 5. Full TypeScript check & Web production bundle
 npm run typecheck
-npm --workspace @percaya/mobile run typecheck
+(cd apps/mobile && npm run typecheck)
 npm --workspace @percaya/web run build
 ```
 
@@ -302,6 +302,13 @@ docs/
   writeup.md                Dev3pack Global Hackathon submission write-up & 3-min demo script
   demo-runbook.md           1-page Sunday live demo operator checklist (WSL + PowerShell + Emulator)
 ```
+
+---
+
+## Mainnet roadmap & `$SKR` business alignment
+
+- **Profit-only monetization (`0%` on loss) → `$SKR` Buy & Burn:** `percaya` charges zero protocol fee on losses, refunds, or splits. On Mainnet, a `1%` protocol share taken strictly from profitable caller performance fees routes into open-market **`SKR` (`SKRbvo6Gf7GondiT3BbTfuRDPqLWei4j2Qy2NPGZhW3`) Buy & Burn** and **Guardian Staking** (`SKRskrmtL83pcL4YqLWt6iPefDqwXQWHSw9S9vz94BZ`)—aligning directly with Solana Mobile's Seed Vault revenue buy-and-burn model (`solanamobile.com/skr`) without adding token-burn friction to everyday social replies.
+- **Official Mainnet SGT Group & `.skr` Domains:** Upgrades Devnet's admin-issued Token-2022 `NonTransferable` SGT to the official Mainnet Seeker Genesis Token Group (`GT22s89nU4iWFkNXj1Bw6uYhJJWDRPpShHt4Bk8f99Te` via `@solana-mobile/skr-genesis-token`) and `.skr` AllDomains (`@solana-mobile/skr-domain`), paired with Raydium CPMM / Jupiter Mainnet swap CPIs and Squads v4 multisig governance.
 
 ---
 

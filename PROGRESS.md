@@ -44,4 +44,8 @@ Living execution tracker for **Dev3pack Global Hackathon (27–29 Nov 2026)**.
 - [x] Configure dedicated RSA-2048 release keystore (`percaya-release.keystore`, verified with `apksigner` SHA-256 `8B:86:97…25:CB`) & `/privacy` + `/terms` pages for Solana dApp Store submission (`f454d1a`, `4a4acc3`, `06578a9`)
 - [x] Deploy public HTTPS backend (`apps/api` `DATA=chain` + Auto-Keeper + `/api/faucet`) & `apps/web` live at `https://percaya.duckdns.org` with Let's Encrypt TLS (`0e39af0`, `f28482d`)
 - [x] Rebuild final signed Release APK pointing to `https://percaya.duckdns.org` & publish on GitHub Releases (`v0.1.0` — `percaya-v0.1.0-devnet.apk`)
+- [x] Add atomic Devnet Token-2022 `NonTransferable` SGT issuance + `verify_seeker_genesis` API (`POST /api/devnet/issue-sgt`, `4/4` API tests + live Devnet simulation verified, `3b2217f`)
+- [x] Add First-Time Judge Welcome Sheet (`?`), 4-Step Interactive Onboarding Checklist, tap-to-explain tier badges, and live 1-tap `Verify Seeker Genesis` UI (`10/10` mobile tests + Hermes bundle verified, `8db273b`)
+- [x] Document Mainnet `$SKR` (`SKRbvo6Gf7GondiT3BbTfuRDPqLWei4j2Qy2NPGZhW3`) Buy & Burn business model and official SGT Group (`GT22s89n…`) roadmap
+- [ ] Pull latest API on `https://percaya.duckdns.org` & rebuild `v0.1.1` signed APK with onboarding + live SGT verification
 - [ ] Record 3-minute live Devnet demo video and submit on `hack.dev3pack.xyz` (Team: Azhar & Youvandra)

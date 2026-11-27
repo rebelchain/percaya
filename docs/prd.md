@@ -184,3 +184,11 @@ What goes on the caller's record is always the **net return to participants afte
 | **Why spaced checkpoints instead of Pyth or TWAP?** | Long-tail call tokens rarely have Pyth feeds, and standard constant-product pools lack manipulation-proof TWAPs. Two on-chain reserve quotes separated by `checkpoint_gap` block single-transaction flash/sandwich triggers while working on any AMM pool. Holding a pool price artificially across an entire gap remains expensive and arbitrageable, and still counts. |
 | **Why Devnet AMM pools instead of Jupiter on Devnet?** | Jupiter has no liquidity routing on Solana Devnet, and deploying Anchor programs on Mainnet requires ~3 SOL in refundable rent while preventing deterministic TP/SL demonstrations. Our `percaya_amm` implements standard constant-product vault math on Devnet so every swap, 2% impact check, and keeper auto-sale runs 100% on-chain during live judging. |
 | **Is pooling capital with a profit share regulated?** | Likely yes in most jurisdictions (collective investment scheme / fund management rules; OJK supervision in Indonesia as of Jan 2026). `percaya` is an un-audited hackathon engineering prototype on Solana Devnet, never marketed as legally cleared for public capital raising. |
+
+---
+
+## 9. Mainnet business model & `$SKR` ecosystem alignment
+
+- **Profit-only monetization (zero loss tax):** `percaya` charges **`0%`** on losing calls, refunds, or token splits. On Mainnet, the protocol takes a `1%` cut strictly from profitable caller performance fees (`share_bps`), ensuring revenue scales only when participants net positive SOL.
+- **`$SKR` Buy & Burn + Guardian Staking:** Mirroring Solana Mobile's Seed Vault revenue model (`solanamobile.com/skr`, `SKRbvo6Gf7GondiT3BbTfuRDPqLWei4j2Qy2NPGZhW3`), Mainnet protocol revenue is routed into open-market **`SKR` Buy & Burn** and **Guardian Staking** (`SKRskrmtL83pcL4YqLWt6iPefDqwXQWHSw9S9vz94BZ`), aligning `percaya` directly with Solana Mobile's open dApp Store curation economy without adding token-gate friction to everyday UX.
+- **Mainnet SGT & `.skr` migration:** Upgrades Devnet's admin-issued Token-2022 `NonTransferable` SGT to the official Mainnet Seeker Genesis Token Group (`GT22s89nU4iWFkNXj1Bw6uYhJJWDRPpShHt4Bk8f99Te`) and `.skr` AllDomains (`@solana-mobile/skr-domain`).

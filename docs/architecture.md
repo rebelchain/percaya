@@ -98,16 +98,17 @@ flowchart TB
 | `GET /api/me/alerts` · `GET /api/me/stream` | Public / SSE | Alert inbox & live SSE stream |
 | `GET /actions.json` · `GET/POST /api/actions/call/:id` | Public | Solana Actions / Blinks endpoints |
 | `POST /api/tx/open-call` · `POST /api/tx/:action/:id` | Public | Unsigned `VersionedTransaction` builders (`open_call`, `checkpoint`, `sell`, `claim`) |
+| `POST /api/devnet/issue-sgt` | Public | Atomic Devnet Token-2022 `NonTransferable` SGT mint + `verify_seeker_genesis` tx |
 | `POST /api/faucet` | Public (rate-limited) | Devnet Judge micro-faucet (`0.08 SOL` / wallet / 6h) for 0-SOL wallets |
 | `GET /.well-known/assetlinks.json` | Public | Android App Links verification |
 
 ---
 
-## 4. Post-hackathon roadmap (Not yet implemented)
+## 4. Post-hackathon roadmap & Mainnet `$SKR` business alignment
 
-To keep the 72-hour build verifiable and honest, the following items are explicitly deferred to post-hackathon sprints:
-- **Durable PostgreSQL + Drizzle ORM persistence & advisory locks** (currently in-memory store hydrated from live Devnet PDAs on startup and every 15s; replies reset on API restart).
-- **Automated `EarlyBuyers` pre-swap funding scanner** (`getSignaturesForAddress` 1-hop SOL funding trail before `buy_tx_sig`).
-- **Raster PNG Blink cards (`@resvg/resvg-js`)** in addition to the live SVG endpoint (`/api/calls/:id/card.svg`).
-- **Mainnet Raydium CPMM (`cp-swap`) CPI adapter** replacing `percaya_amm` and **Mainnet AllDomains `.skr` / official Seeker Genesis collection** verification.
-- **Council / multisig slashing** in place of the single Devnet admin key.
+To keep the 72-hour build verifiable and honest, the following items are deferred to Mainnet sprints:
+- **Sustainable Mainnet Business Model & `$SKR` Buy-and-Burn Alignment:** On Mainnet, `percaya` charges `0%` on losses, refunds, or splits, and takes a `1%` protocol share strictly from profitable caller performance fees. Protocol revenue is allocated into **`SKR` (`SKRbvo6Gf7GondiT3BbTfuRDPqLWei4j2Qy2NPGZhW3`) Buy & Burn and Guardian Staking** (`SKRskrmtL83pcL4YqLWt6iPefDqwXQWHSw9S9vz94BZ`)—directly mirroring Solana Mobile's Seed Vault revenue buy-and-burn model (`solanamobile.com/skr`).
+- **Mainnet Seeker Genesis Group & `.skr` Domains:** Bind `verify_seeker_genesis` to the official Mainnet Seeker Genesis Token Group (`GT22s89nU4iWFkNXj1Bw6uYhJJWDRPpShHt4Bk8f99Te` via `@solana-mobile/skr-genesis-token` + `GenesisRegistry` mint-binding so transferring an SGT across internal Seed Vault sub-accounts cannot reset history) and AllDomains `.skr` resolution (`@solana-mobile/skr-domain`).
+- **Mainnet Raydium CPMM (`cp-swap`) / Jupiter CPI adapter** replacing `percaya_amm`.
+- **Durable PostgreSQL + Drizzle ORM persistence** & automated `EarlyBuyers` pre-swap funding scanner.
+- **Squads v4 multisig slashing** in place of the single Devnet admin key.

@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "node --experimental-strip-types --watch src/index.ts",
+    "dev:chain": "node --experimental-strip-types --watch src/index.ts --chain",
     "start": "node --experimental-strip-types src/index.ts",
     "test": "node --experimental-strip-types --test src/**/*.test.ts",
     "typecheck": "tsc --noEmit"

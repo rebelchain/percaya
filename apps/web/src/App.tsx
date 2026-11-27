@@ -47,6 +47,11 @@ export function App() {
   const [calls, setCalls] = useState<CallSummary[]>(DEMO_CALLS);
   const [selectedCall, setSelectedCall] = useState<CallDetail | null>(null);
   const [params, setParams] = useState<ProtocolParams>(DEMO_PROTOCOL_PARAMS);
+  const [apiMode, setApiMode] = useState<'demo' | 'chain' | 'offline'>('offline');
+  const [programIds, setProgramIds] = useState<{ percayaProgramId: string; ammProgramId: string }>({
+    percayaProgramId: '8ZMPKC79FfVvKsQXudDUJfGmmSMRd1HkY2QU7anrCcf6',
+    ammProgramId: 'AzU89s97v6XKT8oKkyV82p2k17z1eK2aFhGwrXTpquxz',
+  });
   const [stateFilter, setStateFilter] = useState<CallState | 'All'>('All');
   const [tokenFilter, setTokenFilter] = useState<string>('All');
   const [copiedBlink, setCopiedBlink] = useState(false);
@@ -64,10 +69,18 @@ export function App() {
   }, []);
 
   useEffect(() => {
+    fetch('/api/health')
+      .then((r) => (r.ok ? r.json() : null))
+      .then((h) => {
+        if (h?.mode) setApiMode(h.mode === 'chain' ? 'chain' : 'demo');
+        if (h?.programs) setProgramIds(h.programs);
+      })
+      .catch(() => setApiMode('offline'));
+
     fetch('/api/calls')
       .then((r) => (r.ok ? r.json() : null))
       .then((d) => {
-        if (d?.calls) setCalls(d.calls);
+        if (d?.calls && d.calls.length > 0) setCalls(d.calls);
       })
       .catch(() => {});
 
@@ -124,7 +137,11 @@ export function App() {
             <VesselMark />
             <span className="font-semibold text-lg tracking-tight text-ink">percaya</span>
             <span className="hidden sm:inline-block text-xs px-2 py-0.5 rounded-full bg-accent-soft text-accent-deep font-medium">
-              Solana Mobile · Seeker
+              {apiMode === 'chain'
+                ? '● Solana Devnet Live'
+                : apiMode === 'demo'
+                  ? '● API Demo'
+                  : 'Threads · Seeker'}
             </span>
           </button>
 
@@ -149,7 +166,7 @@ export function App() {
 
       <main className="flex-1 max-w-3xl w-full mx-auto px-4 py-6 space-y-6">
         {path === '/docs' ? (
-          <DocsView params={params} />
+          <DocsView params={params} programIds={programIds} />
         ) : selectedCall ? (
           <CallDetailView
             call={selectedCall}
@@ -512,11 +529,69 @@ function CallDetailView({
           ))}
         </div>
       </div>
+
+      {/* Skin-in-the-Game Thread Replies */}
+      <div className="bg-surface rounded-card border border-line p-5 shadow-card space-y-3">
+        <div className="flex items-center justify-between">
+          <h2 className="text-sm font-semibold text-ink">
+            Thread replies ({call.replies?.length ?? 0})
+          </h2>
+          <a
+            href={`https://explorer.solana.com/address/${call.pda}?cluster=devnet`}
+            target="_blank"
+            rel="noreferrer"
+            className="inline-flex items-center gap-1 text-xs font-medium text-accent hover:underline"
+          >
+            Inspect CallPool PDA <ExternalLink className="w-3 h-3" />
+          </a>
+        </div>
+        {!call.replies || call.replies.length === 0 ? (
+          <p className="text-xs text-ink-3">
+            No replies yet. Replies posted from the Seeker app automatically tag whether the author
+            has SOL in this pool.
+          </p>
+        ) : (
+          <div className="divide-y divide-line">
+            {call.replies.map((rep) => {
+              const inPool = BigInt(rep.depositedLamports) > 0n;
+              return (
+                <div key={rep.id} className="py-3 space-y-1">
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-medium text-ink">
+                      {displayIdentity(rep.author, rep.authorSkr)}
+                    </span>
+                    <span
+                      className={`num text-[11px] px-2 py-0.5 rounded-full font-medium ${
+                        inPool
+                          ? 'bg-accent-soft text-accent-deep'
+                          : 'bg-subtle text-ink-3 border border-line'
+                      }`}
+                    >
+                      {rep.isCaller
+                        ? `Caller · ${formatSolFloor(rep.depositedLamports, 2)} SOL`
+                        : inPool
+                          ? `In Pool · ${formatSolFloor(rep.depositedLamports, 2)} SOL`
+                          : 'Spectator'}
+                    </span>
+                  </div>
+                  <p className="text-sm text-ink-2">{rep.body}</p>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
 
-function DocsView({ params }: { params: ProtocolParams }) {
+function DocsView({
+  params,
+  programIds,
+}: {
+  params: ProtocolParams;
+  programIds: { percayaProgramId: string; ammProgramId: string };
+}) {
   return (
     <div className="space-y-5">
       <div className="bg-surface rounded-card border border-line p-5 shadow-card space-y-3">
@@ -583,14 +658,24 @@ function DocsView({ params }: { params: ProtocolParams }) {
             regulated collective investment schemes. This is an un-audited Devnet hackathon build.
           </li>
         </ul>
-        <a
-          href="/api/health"
-          target="_blank"
-          rel="noreferrer"
-          className="inline-flex items-center gap-1 text-xs font-medium text-accent hover:underline pt-1"
-        >
-          Inspect live API & Program IDs <ExternalLink className="w-3.5 h-3.5" />
-        </a>
+        <div className="flex flex-wrap items-center gap-4 pt-2 text-xs">
+          <a
+            href={`https://explorer.solana.com/address/${programIds.percayaProgramId}?cluster=devnet`}
+            target="_blank"
+            rel="noreferrer"
+            className="inline-flex items-center gap-1 font-medium text-accent hover:underline num"
+          >
+            percaya: {programIds.percayaProgramId.slice(0, 8)}… <ExternalLink className="w-3.5 h-3.5" />
+          </a>
+          <a
+            href={`https://explorer.solana.com/address/${programIds.ammProgramId}?cluster=devnet`}
+            target="_blank"
+            rel="noreferrer"
+            className="inline-flex items-center gap-1 font-medium text-accent hover:underline num"
+          >
+            percaya_amm: {programIds.ammProgramId.slice(0, 8)}… <ExternalLink className="w-3.5 h-3.5" />
+          </a>
+        </div>
       </div>
     </div>
   );

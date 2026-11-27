@@ -33,6 +33,7 @@ import {
   buildClaimTx,
   buildOpenCallTx,
   buildSellTx,
+  buildVerifySeekerGenesisTx,
 } from './tx-builders.ts';
 
 export function createApp(customStore?: PercayaStore) {
@@ -416,6 +417,58 @@ export function createApp(customStore?: PercayaStore) {
       return c.json(
         { error: err instanceof Error ? err.message : 'Devnet faucet unavailable' },
         500,
+      );
+    }
+  });
+
+  // Issues a 1-per-wallet Devnet Token-2022 NonTransferable Seeker Genesis NFT + verify_seeker_genesis tx
+  const sgtIssuedHistory = new Set<string>();
+  app.post('/api/devnet/issue-sgt', async (c) => {
+    try {
+      const body = await c.req.json<{ caller?: string }>();
+      if (!body?.caller) {
+        return c.json({ error: 'Missing caller wallet pubkey' }, 400);
+      }
+      let callerPk: PublicKey;
+      try {
+        callerPk = new PublicKey(body.caller);
+      } catch {
+        return c.json({ error: 'Invalid Solana public key' }, 400);
+      }
+
+      let authority: Keypair | null = null;
+      try {
+        if (process.env.KEEPER_SECRET_KEY) {
+          authority = Keypair.fromSecretKey(
+            Uint8Array.from(JSON.parse(process.env.KEEPER_SECRET_KEY)),
+          );
+        } else {
+          const kpPath = path.join(os.homedir(), '.config', 'solana', 'id.json');
+          if (fs.existsSync(kpPath)) {
+            authority = Keypair.fromSecretKey(
+              Uint8Array.from(JSON.parse(fs.readFileSync(kpPath, 'utf8'))),
+            );
+          }
+        }
+      } catch {
+        authority = null;
+      }
+
+      if (!authority) {
+        return c.json({ error: 'Devnet Genesis authority keypair not configured on server' }, 503);
+      }
+
+      const res = await buildVerifySeekerGenesisTx({
+        rpcUrl,
+        callerBase58: callerPk.toBase58(),
+        genesisAuthority: authority,
+      });
+      sgtIssuedHistory.add(callerPk.toBase58());
+      return c.json(res);
+    } catch (err) {
+      return c.json(
+        { error: err instanceof Error ? err.message : 'Unable to build Seeker Genesis tx' },
+        400,
       );
     }
   });

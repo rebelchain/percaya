@@ -1,6 +1,7 @@
 import { LAMPORTS_PER_SOL_N, PDA_SEEDS, u64LeBytes, type CallDetail } from '@percaya/core';
 import {
   Connection,
+  Keypair,
   PublicKey,
   SystemProgram,
   TransactionInstruction,
@@ -18,6 +19,7 @@ import {
 import { loadDevnetDeployment } from './devnet-sync.ts';
 
 const SPL_TOKEN_ID = new PublicKey('TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA');
+const TOKEN_2022_ID = new PublicKey('TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb');
 
 async function compileV0Base64(
   conn: Connection,
@@ -285,4 +287,157 @@ export async function buildClaimTx(rpcUrl: string, participantBase58: string, ca
     data: encodeClaimIxData(),
   });
   return { transaction: await compileV0Base64(conn, participant, [ix]) };
+}
+
+/**
+ * Builds a single atomic VersionedTransaction that:
+ *  1. Mints a 1-per-device Token-2022 `NonTransferable` Devnet Seeker Genesis NFT (signed by `genesisAuthority`)
+ *  2. Registers `CallerRecord` if not yet initialized
+ *  3. Binds the NFT permanently to `GenesisRegistry` PDA (`[b"genesis", genesis_mint]`) via `verify_seeker_genesis`
+ *
+ * Partially signed by `[genesisAuthority, genMint, genTok]` so the caller signs once in MWA 2.0.
+ */
+export async function buildVerifySeekerGenesisTx(params: {
+  rpcUrl: string;
+  callerBase58: string;
+  genesisAuthority: Keypair;
+}): Promise<{
+  transaction: string;
+  genesisMint: string;
+  genesisRegistry: string;
+  needsRegister: boolean;
+}> {
+  const dep = loadDevnetDeployment();
+  const configPda = new PublicKey(
+    dep?.configPda ?? 'F559AB2MjAZModvfDw9oqqpy8gNEuS3AFYZbFTii8aa7',
+  );
+  const { percayaProgramId } = getProgramIds();
+  const programId = new PublicKey(percayaProgramId);
+  const caller = new PublicKey(params.callerBase58);
+  const conn = new Connection(params.rpcUrl, 'confirmed');
+
+  const [callerRecord] = PublicKey.findProgramAddressSync(
+    PDA_SEEDS.caller(caller.toBytes()).map((b) => Buffer.from(b)),
+    programId,
+  );
+  const [bondVault] = PublicKey.findProgramAddressSync(
+    PDA_SEEDS.bondVault(caller.toBytes()).map((b) => Buffer.from(b)),
+    programId,
+  );
+
+  const recAcct = await conn.getAccountInfo(callerRecord);
+  if (recAcct && recAcct.data[72] === 1) {
+    throw new Error('This wallet already has a verified Seeker Genesis Token bound on-chain');
+  }
+  const needsRegister = !recAcct;
+
+  const [rent170, rent174, latest] = await Promise.all([
+    conn.getMinimumBalanceForRentExemption(170),
+    conn.getMinimumBalanceForRentExemption(174),
+    conn.getLatestBlockhash('confirmed'),
+  ]);
+
+  const genMint = Keypair.generate();
+  const genTok = Keypair.generate();
+  const [genRegPda] = PublicKey.findProgramAddressSync(
+    PDA_SEEDS.genesis(genMint.publicKey.toBytes()).map((b) => Buffer.from(b)),
+    programId,
+  );
+
+  const initMintData = Buffer.alloc(35);
+  initMintData[0] = 20; // InitializeMint2
+  initMintData[1] = 0; // decimals = 0
+  params.genesisAuthority.publicKey.toBuffer().copy(initMintData, 2);
+  initMintData[34] = 0;
+
+  const ixs: TransactionInstruction[] = [
+    SystemProgram.createAccount({
+      fromPubkey: caller,
+      newAccountPubkey: genMint.publicKey,
+      lamports: rent170,
+      space: 170,
+      programId: TOKEN_2022_ID,
+    }),
+    new TransactionInstruction({
+      programId: TOKEN_2022_ID,
+      keys: [{ pubkey: genMint.publicKey, isSigner: false, isWritable: true }],
+      data: Buffer.from([32]), // InitializeNonTransferableMint
+    }),
+    new TransactionInstruction({
+      programId: TOKEN_2022_ID,
+      keys: [{ pubkey: genMint.publicKey, isSigner: false, isWritable: true }],
+      data: initMintData,
+    }),
+    SystemProgram.createAccount({
+      fromPubkey: caller,
+      newAccountPubkey: genTok.publicKey,
+      lamports: rent174,
+      space: 174,
+      programId: TOKEN_2022_ID,
+    }),
+    new TransactionInstruction({
+      programId: TOKEN_2022_ID,
+      keys: [
+        { pubkey: genTok.publicKey, isSigner: false, isWritable: true },
+        { pubkey: genMint.publicKey, isSigner: false, isWritable: false },
+      ],
+      data: Buffer.concat([Buffer.from([18]), caller.toBuffer()]), // InitializeAccount3
+    }),
+    new TransactionInstruction({
+      programId: TOKEN_2022_ID,
+      keys: [
+        { pubkey: genMint.publicKey, isSigner: false, isWritable: true },
+        { pubkey: genTok.publicKey, isSigner: false, isWritable: true },
+        { pubkey: params.genesisAuthority.publicKey, isSigner: true, isWritable: false },
+      ],
+      data: Buffer.concat([Buffer.from([7]), Buffer.from(u64LeBytes(1n))]), // MintTo(1)
+    }),
+  ];
+
+  if (needsRegister) {
+    ixs.push(
+      new TransactionInstruction({
+        programId,
+        keys: [
+          { pubkey: caller, isSigner: true, isWritable: true },
+          { pubkey: callerRecord, isSigner: false, isWritable: true },
+          { pubkey: bondVault, isSigner: false, isWritable: true },
+          { pubkey: SystemProgram.programId, isSigner: false, isWritable: false },
+        ],
+        data: anchorIxDiscriminator('register_caller'),
+      }),
+    );
+  }
+
+  ixs.push(
+    new TransactionInstruction({
+      programId,
+      keys: [
+        { pubkey: caller, isSigner: true, isWritable: true },
+        { pubkey: configPda, isSigner: false, isWritable: false },
+        { pubkey: callerRecord, isSigner: false, isWritable: true },
+        { pubkey: genMint.publicKey, isSigner: false, isWritable: false },
+        { pubkey: genTok.publicKey, isSigner: false, isWritable: false },
+        { pubkey: genRegPda, isSigner: false, isWritable: true },
+        { pubkey: SystemProgram.programId, isSigner: false, isWritable: false },
+      ],
+      data: anchorIxDiscriminator('verify_seeker_genesis'),
+    }),
+  );
+
+  const msg = new TransactionMessage({
+    payerKey: caller,
+    recentBlockhash: latest.blockhash,
+    instructions: ixs,
+  }).compileToV0Message();
+
+  const tx = new VersionedTransaction(msg);
+  tx.sign([params.genesisAuthority, genMint, genTok]);
+
+  return {
+    transaction: Buffer.from(tx.serialize()).toString('base64'),
+    genesisMint: genMint.publicKey.toBase58(),
+    genesisRegistry: genRegPda.toBase58(),
+    needsRegister,
+  };
 }

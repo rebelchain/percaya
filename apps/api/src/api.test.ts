@@ -110,3 +110,20 @@ test('Solana Actions (Blinks) GET & POST return CORS headers and serialized Vers
   assert.ok(Buffer.from(postJson.transaction, 'base64').length > 100);
   assert.ok(postJson.message.includes('0.25'));
 });
+
+test('POST /api/devnet/issue-sgt validates caller pubkey before hitting RPC', async () => {
+  const app = createApp();
+  const missing = await app.request('/api/devnet/issue-sgt', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({}),
+  });
+  assert.equal(missing.status, 400);
+
+  const invalid = await app.request('/api/devnet/issue-sgt', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ caller: 'not-a-solana-pubkey' }),
+  });
+  assert.equal(invalid.status, 400);
+});

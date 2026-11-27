@@ -56,7 +56,7 @@ type TabKey = 'home' | 'explore' | 'compose' | 'activity' | 'profile';
 type FeedMode = 'newest' | 'following';
 type ProfileTab = 'calls' | 'record' | 'slashes';
 
-const API_BASE = 'http://10.0.2.2:8787'; // Android Emulator -> host localhost:8787
+const API_CANDIDATES = ['http://127.0.0.1:8787', 'http://10.0.2.2:8787'];
 
 function timeAgo(unixSec: number): string {
   const diff = Math.max(1, Math.floor(Date.now() / 1000) - unixSec);
@@ -89,25 +89,40 @@ export default function App() {
     () => JSON.parse(JSON.stringify(DEMO_CALLERS)) as CallerRecord[],
   );
   const [apiMode, setApiMode] = useState<'demo' | 'chain' | 'offline'>('offline');
+  const [apiBase, setApiBase] = useState<string>(API_CANDIDATES[0]);
   const [refreshing, setRefreshing] = useState(false);
 
   const fetchLiveFeed = useCallback(async () => {
-    try {
-      const [healthRes, callsRes, callersRes] = await Promise.all([
-        fetch(`${API_BASE}/api/health`),
-        fetch(`${API_BASE}/api/calls`),
-        fetch(`${API_BASE}/api/callers`),
-      ]);
-      if (healthRes.ok) {
-        const h = (await healthRes.json()) as { mode?: 'demo' | 'chain' };
-        setApiMode(h.mode === 'chain' ? 'chain' : 'demo');
+    let resolvedBase: string | null = null;
+    for (const candidate of API_CANDIDATES) {
+      try {
+        const hRes = await fetch(`${candidate}/api/health`);
+        if (hRes.ok) {
+          const h = (await hRes.json()) as { mode?: 'demo' | 'chain' };
+          setApiMode(h.mode === 'chain' ? 'chain' : 'demo');
+          setApiBase(candidate);
+          resolvedBase = candidate;
+          break;
+        }
+      } catch {
+        // Try next candidate
       }
+    }
+    if (!resolvedBase) {
+      setApiMode('offline');
+      return;
+    }
+    try {
+      const [callsRes, callersRes] = await Promise.all([
+        fetch(`${resolvedBase}/api/calls`),
+        fetch(`${resolvedBase}/api/callers`),
+      ]);
       if (callsRes.ok) {
         const data = (await callsRes.json()) as { calls?: CallDetail[] };
         if (data.calls && data.calls.length > 0) {
           const detailed = await Promise.all(
             data.calls.slice(0, 12).map(async (c) => {
-              const r = await fetch(`${API_BASE}/api/calls/${c.callId}`);
+              const r = await fetch(`${resolvedBase}/api/calls/${c.callId}`);
               if (r.ok) {
                 const d = (await r.json()) as { call?: CallDetail };
                 if (d.call) return d.call;
@@ -182,7 +197,7 @@ export default function App() {
     void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     setBusy(true);
     try {
-      const s = await connectSeekerWallet(API_BASE);
+      const s = await connectSeekerWallet(apiBase);
       setSession(s);
       void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     } catch {
@@ -225,7 +240,7 @@ export default function App() {
     }
     setBusy(true);
     try {
-      const res = await fetch(`${API_BASE}/api/actions/call/${call.callId}?amount=${depositSol}`, {
+      const res = await fetch(`${apiBase}/api/actions/call/${call.callId}?amount=${depositSol}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ account: session.pubkey }),
@@ -277,7 +292,7 @@ export default function App() {
     setReplyDraft('');
 
     if (session.apiBearerToken) {
-      void fetch(`${API_BASE}/api/calls/${call.callId}/replies`, {
+      void fetch(`${apiBase}/api/calls/${call.callId}/replies`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -303,7 +318,7 @@ export default function App() {
     }
     setBusy(true);
     try {
-      const res = await fetch(`${API_BASE}/api/tx/open-call`, {
+      const res = await fetch(`${apiBase}/api/tx/open-call`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -358,7 +373,7 @@ export default function App() {
     }
     setBusy(true);
     try {
-      const res = await fetch(`${API_BASE}/api/tx/${action}/${call.callId}`, {
+      const res = await fetch(`${apiBase}/api/tx/${action}/${call.callId}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ account: session.pubkey }),

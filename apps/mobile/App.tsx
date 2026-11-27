@@ -31,6 +31,12 @@ import {
   View,
 } from 'react-native';
 import { connectSeekerWallet, signAndSendViaSeedVault, type SeekerSession } from './src/mwa';
+import {
+  buildDepositTxDirect,
+  buildOpenCallTxDirect,
+  buildPoolActionTxDirect,
+  fetchDevnetStateDirect,
+} from './src/chain-direct';
 
 /** Calm Daylight Threads Design Tokens (docs/design.md) */
 const C = {
@@ -56,7 +62,22 @@ type TabKey = 'home' | 'explore' | 'compose' | 'activity' | 'profile';
 type FeedMode = 'newest' | 'following';
 type ProfileTab = 'calls' | 'record' | 'slashes';
 
-const API_CANDIDATES = ['http://127.0.0.1:8787', 'http://10.0.2.2:8787'];
+const PUBLIC_API_ENV = process.env.EXPO_PUBLIC_API_URL?.trim();
+const API_CANDIDATES = [
+  ...(PUBLIC_API_ENV ? [PUBLIC_API_ENV.replace(/\/$/, '')] : []),
+  'http://127.0.0.1:8787',
+  'http://10.0.2.2:8787',
+];
+
+async function fetchWithTimeout(url: string, init?: RequestInit, timeoutMs = 2000) {
+  const ctrl = new AbortController();
+  const id = setTimeout(() => ctrl.abort(), timeoutMs);
+  try {
+    return await fetch(url, { ...init, signal: ctrl.signal });
+  } finally {
+    clearTimeout(id);
+  }
+}
 
 function timeAgo(unixSec: number): string {
   const diff = Math.max(1, Math.floor(Date.now() / 1000) - unixSec);
@@ -89,17 +110,19 @@ export default function App() {
     () => JSON.parse(JSON.stringify(DEMO_CALLERS)) as CallerRecord[],
   );
   const [apiMode, setApiMode] = useState<'demo' | 'chain' | 'offline'>('offline');
-  const [apiBase, setApiBase] = useState<string>(API_CANDIDATES[0]);
+  const [backendOnline, setBackendOnline] = useState<boolean>(false);
+  const [apiBase, setApiBase] = useState<string>(API_CANDIDATES[0] ?? 'http://127.0.0.1:8787');
   const [refreshing, setRefreshing] = useState(false);
 
   const fetchLiveFeed = useCallback(async () => {
     let resolvedBase: string | null = null;
     for (const candidate of API_CANDIDATES) {
       try {
-        const hRes = await fetch(`${candidate}/api/health`);
+        const hRes = await fetchWithTimeout(`${candidate}/api/health`, undefined, 2000);
         if (hRes.ok) {
           const h = (await hRes.json()) as { mode?: 'demo' | 'chain' };
           setApiMode(h.mode === 'chain' ? 'chain' : 'demo');
+          setBackendOnline(true);
           setApiBase(candidate);
           resolvedBase = candidate;
           break;
@@ -108,36 +131,68 @@ export default function App() {
         // Try next candidate
       }
     }
-    if (!resolvedBase) {
-      setApiMode('offline');
-      return;
-    }
-    try {
-      const [callsRes, callersRes] = await Promise.all([
-        fetch(`${resolvedBase}/api/calls`),
-        fetch(`${resolvedBase}/api/callers`),
-      ]);
-      if (callsRes.ok) {
-        const data = (await callsRes.json()) as { calls?: CallDetail[] };
-        if (data.calls && data.calls.length > 0) {
-          const detailed = await Promise.all(
-            data.calls.slice(0, 12).map(async (c) => {
-              const r = await fetch(`${resolvedBase}/api/calls/${c.callId}`);
-              if (r.ok) {
-                const d = (await r.json()) as { call?: CallDetail };
-                if (d.call) return d.call;
-              }
-              return { ...c, positions: [], earlyBuyers: [], priceSeries: [], replies: [], buyTxSig: null, sellTxSig: null };
-            }),
-          );
-          setCalls(detailed);
+
+    if (resolvedBase) {
+      try {
+        const [callsRes, callersRes] = await Promise.all([
+          fetchWithTimeout(`${resolvedBase}/api/calls`, undefined, 4000),
+          fetchWithTimeout(`${resolvedBase}/api/callers`, undefined, 4000),
+        ]);
+        if (callsRes.ok) {
+          const data = (await callsRes.json()) as { calls?: CallDetail[] };
+          if (data.calls && data.calls.length > 0) {
+            const detailed = await Promise.all(
+              data.calls.slice(0, 12).map(async (c) => {
+                const r = await fetchWithTimeout(
+                  `${resolvedBase}/api/calls/${c.callId}`,
+                  undefined,
+                  4000,
+                );
+                if (r.ok) {
+                  const d = (await r.json()) as { call?: CallDetail };
+                  if (d.call) return d.call;
+                }
+                return {
+                  ...c,
+                  positions: [],
+                  earlyBuyers: [],
+                  priceSeries: [],
+                  replies: [],
+                  buyTxSig: null,
+                  sellTxSig: null,
+                };
+              }),
+            );
+            setCalls(detailed);
+          }
         }
+        if (callersRes.ok) {
+          const cd = (await callersRes.json()) as { callers?: CallerRecord[] };
+          if (cd.callers && cd.callers.length > 0) {
+            setCallers(cd.callers);
+          }
+        }
+        return;
+      } catch {
+        // Fall through to direct on-device Solana Devnet RPC reader
       }
-      if (callersRes.ok) {
-        const cd = (await callersRes.json()) as { callers?: CallerRecord[] };
-        if (cd.callers && cd.callers.length > 0) {
-          setCallers(cd.callers);
-        }
+    }
+
+    setBackendOnline(false);
+    try {
+      const direct = await fetchDevnetStateDirect();
+      setApiMode('chain');
+      if (direct.calls.length > 0) {
+        setCalls((prev) => {
+          const prevReplies = new Map(prev.map((c) => [c.callId, c.replies]));
+          return direct.calls.map((c) => ({
+            ...c,
+            replies: prevReplies.get(c.callId) ?? c.replies,
+          }));
+        });
+      }
+      if (direct.callers.length > 0) {
+        setCallers(direct.callers);
       }
     } catch {
       setApiMode('offline');
@@ -162,14 +217,14 @@ export default function App() {
   const [following, setFollowing] = useState<string[]>([DEMO_CALLERS[0].pubkey]);
   const [watching, setWatching] = useState<number[]>([6, 5]);
   const [replyDraft, setReplyDraft] = useState('');
-  const [depositSol, setDepositSol] = useState<string>('0.25');
+  const [depositSol, setDepositSol] = useState<string>('0.005');
   const [session, setSession] = useState<SeekerSession | null>(null);
   const [busy, setBusy] = useState(false);
 
   // 3-Step Compose Call Thread Wizard (persisted across Android MWA Activity switches)
   const [wizStep, setWizStep] = useState<1 | 2 | 3>(1);
   const [wizTokenIdx, setWizTokenIdx] = useState(0);
-  const [wizStakeSol, setWizStakeSol] = useState('0.012');
+  const [wizStakeSol, setWizStakeSol] = useState('0.01');
   const [wizWindowMin, setWizWindowMin] = useState(5);
   const [wizTpPct, setWizTpPct] = useState(20);
   const [wizSlPct, setWizSlPct] = useState(15);
@@ -238,25 +293,48 @@ export default function App() {
       await handleConnectMwa();
       return;
     }
+    if (session.simulated) {
+      void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      Alert.alert(
+        'Preview Mode',
+        `Connect a wallet via MWA 2.0 to deposit ${depositSol} SOL into Call #${call.callId} on Solana Devnet.`,
+      );
+      return;
+    }
     setBusy(true);
     try {
-      const res = await fetch(`${apiBase}/api/actions/call/${call.callId}?amount=${depositSol}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ account: session.pubkey }),
-      });
-      if (res.ok && !session.simulated) {
-        const { transaction } = (await res.json()) as { transaction: string };
-        const sig = await signAndSendViaSeedVault(transaction, session.mwaAuthToken);
-        void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-        Alert.alert('Deposited on Solana Devnet', `Signature: ${sig.slice(0, 16)}…`);
-      } else {
-        void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-        Alert.alert(
-          'Joined via Seed Vault',
-          `Committed ${depositSol} SOL into Call #${call.callId} ($${call.token.symbol}). Your replies in this thread now show "In Pool".`,
-        );
+      let txBase64: string | null = null;
+      if (backendOnline) {
+        try {
+          const res = await fetchWithTimeout(
+            `${apiBase}/api/actions/call/${call.callId}?amount=${depositSol}`,
+            {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ account: session.pubkey }),
+            },
+            5000,
+          );
+          if (res.ok) {
+            const payload = (await res.json()) as { transaction: string };
+            txBase64 = payload.transaction;
+          }
+        } catch {
+          // Fall back to direct on-device Devnet tx builder
+        }
       }
+      if (!txBase64) {
+        const direct = await buildDepositTxDirect({
+          call,
+          accountBase58: session.pubkey,
+          amountSol: Number(depositSol),
+        });
+        txBase64 = direct.transaction;
+      }
+      const sig = await signAndSendViaSeedVault(txBase64, session.mwaAuthToken);
+      void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      Alert.alert('Deposited on Solana Devnet', `Signature: ${sig.slice(0, 18)}…`);
+      void fetchLiveFeed();
     } catch (err) {
       Alert.alert('Transaction Notice', err instanceof Error ? err.message : 'Unable to send');
     } finally {
@@ -316,13 +394,47 @@ export default function App() {
       await handleConnectMwa();
       return;
     }
+    if (session.simulated) {
+      Alert.alert(
+        'Preview Mode',
+        'Connect Seed Vault, Solflare, Phantom, or Fake Wallet via MWA 2.0 to open a live call on Solana Devnet.',
+      );
+      return;
+    }
     setBusy(true);
     try {
-      const res = await fetch(`${apiBase}/api/tx/open-call`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          caller: session.pubkey,
+      let txData: { transaction: string; callId: number } | null = null;
+      if (backendOnline) {
+        try {
+          const res = await fetchWithTimeout(
+            `${apiBase}/api/tx/open-call`,
+            {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                caller: session.pubkey,
+                tokenSymbol: selectedToken.symbol,
+                stakeSol: Number(wizStakeSol),
+                windowMin: wizWindowMin,
+                tpPct: wizTpPct,
+                slPct: wizSlPct,
+                maxHoldMin: wizMaxHoldMin,
+                sharePct: wizSharePct,
+                thesis: wizThesis,
+              }),
+            },
+            6000,
+          );
+          if (res.ok) {
+            txData = (await res.json()) as { transaction: string; callId: number };
+          }
+        } catch {
+          // Fall back to direct on-device Devnet tx builder
+        }
+      }
+      if (!txData) {
+        txData = await buildOpenCallTxDirect({
+          callerBase58: session.pubkey,
           tokenSymbol: selectedToken.symbol,
           stakeSol: Number(wizStakeSol),
           windowMin: wizWindowMin,
@@ -331,28 +443,15 @@ export default function App() {
           maxHoldMin: wizMaxHoldMin,
           sharePct: wizSharePct,
           thesis: wizThesis,
-        }),
-      });
-      if (res.ok && !session.simulated) {
-        const data = (await res.json()) as {
-          transaction: string;
-          callId: number;
-          bondLamports: string;
-        };
-        const sig = await signAndSendViaSeedVault(data.transaction, session.mwaAuthToken);
-        void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-        Alert.alert(
-          `Call #${data.callId} Published on Devnet`,
-          `Confirmed via MWA 2.0.\nTx: ${sig.slice(0, 18)}…`,
-        );
-        void fetchLiveFeed();
-      } else {
-        void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-        Alert.alert(
-          'Call Thread Published (Preview)',
-          `Opened $${selectedToken.symbol} thread with ${wizStakeSol} SOL stake.`,
-        );
+        });
       }
+      const sig = await signAndSendViaSeedVault(txData.transaction, session.mwaAuthToken);
+      void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      Alert.alert(
+        `Call #${txData.callId} Published on Devnet`,
+        `Confirmed via MWA 2.0.\nTx: ${sig.slice(0, 18)}…`,
+      );
+      void fetchLiveFeed();
       setWizStep(1);
       setTab('home');
     } catch (err) {
@@ -371,25 +470,47 @@ export default function App() {
       await handleConnectMwa();
       return;
     }
+    if (session.simulated) {
+      Alert.alert(
+        `${action.toUpperCase()} Preview`,
+        `Connect a wallet via MWA 2.0 to execute live ${action}() on Call #${call.callId}.`,
+      );
+      return;
+    }
     setBusy(true);
     try {
-      const res = await fetch(`${apiBase}/api/tx/${action}/${call.callId}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ account: session.pubkey }),
-      });
-      if (res.ok && !session.simulated) {
-        const { transaction } = (await res.json()) as { transaction: string };
-        const sig = await signAndSendViaSeedVault(transaction, session.mwaAuthToken);
-        void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-        Alert.alert(`${action.toUpperCase()} Confirmed on Devnet`, `Tx: ${sig.slice(0, 18)}…`);
-        void fetchLiveFeed();
-      } else {
-        Alert.alert(
-          `${action.toUpperCase()} Preview`,
-          `Connect Solflare/Phantom Devnet via MWA 2.0 to execute live ${action}() on Call #${call.callId}.`,
-        );
+      let txBase64: string | null = null;
+      if (backendOnline) {
+        try {
+          const res = await fetchWithTimeout(
+            `${apiBase}/api/tx/${action}/${call.callId}`,
+            {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ account: session.pubkey }),
+            },
+            5000,
+          );
+          if (res.ok) {
+            const payload = (await res.json()) as { transaction: string };
+            txBase64 = payload.transaction;
+          }
+        } catch {
+          // Fall back to direct on-device Devnet tx builder
+        }
       }
+      if (!txBase64) {
+        const direct = await buildPoolActionTxDirect({
+          action,
+          signerBase58: session.pubkey,
+          call,
+        });
+        txBase64 = direct.transaction;
+      }
+      const sig = await signAndSendViaSeedVault(txBase64, session.mwaAuthToken);
+      void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      Alert.alert(`${action.toUpperCase()} Confirmed on Devnet`, `Tx: ${sig.slice(0, 18)}…`);
+      void fetchLiveFeed();
     } catch (err) {
       Alert.alert('Transaction Error', err instanceof Error ? err.message : 'Unable to send tx');
     } finally {

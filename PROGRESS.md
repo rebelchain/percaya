@@ -5,7 +5,7 @@ Living execution tracker for **Dev3pack Global Hackathon (27–29 Nov 2026)**.
 ---
 
 ## Phase 1: Foundation, Smart Contracts & Core Math (DONE)
-- [x] Research `dev3pack.xyz`, `docs.solanamobile.com`, and `youvandra/trustpool`
+- [x] Research `dev3pack.xyz`, `docs.solanamobile.com`, `templates.solanamobile.com`, and `solana-mobile/solana-mobile-skills`
 - [x] Author repo-ready documentation (`README.md`, `docs/prd.md`, `docs/contracts.md`, `docs/architecture.md`, `docs/design.md`, `docs/writeup.md`)
 - [x] Implement `percaya_amm` Anchor constant-product AMM + closed-form `u128` 2% impact math (`AzU89s97v6XKT8oKkyV82p2k17z1eK2aFhGwrXTpquxz`)
 - [x] Implement `percaya` Anchor pooled-call & Token-2022 `GenesisRegistry` program (`8ZMPKC79FfVvKsQXudDUJfGmmSMRd1HkY2QU7anrCcf6`)
@@ -34,9 +34,13 @@ Living execution tracker for **Dev3pack Global Hackathon (27–29 Nov 2026)**.
 - [x] Wire `apps/mobile` to live `API_BASE` (`● Devnet Live` via `adb reverse tcp:8787`, pull-to-refresh, transparent Bond vs Stake breakdown)
 - [x] Install Solflare Devnet MWA Wallet on Android Emulator, fund `0.5 SOL` (`tx: 59RfkAWh…`), sign live Devnet Call #2 & Call #3 (`tx: 2oY9YPJbS97BBdPsJG…`) via MWA 2.0 `signAndSendTransactions` with Devnet RPC receipt fallback (`ec89c32`)
 
-## Phase 5: Polish, Mas Youvandra Review & Final Submission (IN PROGRESS)
+## Phase 5: Native Mobile Polish, Judge Readiness & Submission (IN PROGRESS)
 - [x] Sync all repo docs (`README.md`, `contracts.md`, `architecture.md`, `writeup.md`, `security.md`, `demo-runbook.md`, `LICENSE`) with actual stack & live Devnet receipts
 - [x] Polish `apps/web` preview with Thread Replies (`In Pool` vs `Spectator` badges), `● Solana Devnet Live` badge & Solana Explorer Devnet links
-- [x] Build Standalone Signed Release APK (`cd android && .\gradlew assembleRelease`) and verify sideload install without Metro (live Devnet Sign-in, Detail Thread Reply, and Open Call #3 confirmed end-to-end)
-- [ ] Send Review PR & APK to Mas Youvandra and apply review notes
-- [ ] Record 3-minute live Devnet demo video and submit on `hack.dev3pack.xyz`
+- [x] Build Standalone Release APK (`cd android && .\gradlew assembleRelease`) and verify sideload install without Metro (live Devnet Sign-in, Detail Thread Reply, and Open Call #3 confirmed end-to-end)
+- [x] Add on-device direct Solana Devnet PDA reader & tx builder (`apps/mobile/src/chain-direct.ts`) so cold-installed APKs run live on Devnet without any local server (`48fe2f1`)
+- [x] Add idiomatic `useMobileWallet` hook, Fake Wallet SIWS fallback, real `Profile` Devnet state, and rate-limited `POST /api/faucet` (`0.08 SOL` Judge Test Faucet) (`57c6af4`)
+- [x] Add native phone hardware features: `expo-camera` QR Call Scanner, SVG Call QR Sheet, and `expo-notifications` watched-call state transition alerts (`6/6` mobile unit tests, verified on standalone Release APK) (`2400395`, `55bb4bb`)
+- [ ] Configure dedicated RSA-2048 release keystore (`percaya-release.keystore`) & `/privacy` + `/terms` pages for Solana dApp Store submission
+- [ ] Deploy public HTTPS backend (`apps/api` + `apps/web`) on VPS/AWS & rebuild final signed Release APK
+- [ ] Record 3-minute live Devnet demo video and submit on `hack.dev3pack.xyz` (Team: Azhar & Youvandra)

@@ -18,11 +18,13 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   Alert,
   Modal,
+  Platform,
   Pressable,
   RefreshControl,
   SafeAreaView,
   ScrollView,
   Share,
+  StatusBar as RNStatusBar,
   StyleSheet,
   Text,
   TextInput,
@@ -1274,7 +1276,11 @@ export default function App() {
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: C.bg },
+  safe: {
+    flex: 1,
+    backgroundColor: C.bg,
+    paddingTop: Platform.OS === 'android' ? (RNStatusBar.currentHeight ?? 36) : 0,
+  },
   topBar: {
     height: 54,
     backgroundColor: C.surface,

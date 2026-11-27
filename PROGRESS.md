@@ -32,11 +32,11 @@ Living execution tracker for **Dev3pack Global Hackathon (27–29 Nov 2026)**.
 - [x] Implement `apps/api/src/tx-builders.ts` (atomic auto-bundled `register_caller + post_bond + open_call`, plus `checkpoint`, `sell`, `claim`)
 - [x] Open live Devnet Call #1 (`tx: 3tJumYzk…`) & verify `DATA=chain` decoding (`$tBONK`, `callerSeekerVerified: true`, `liveCapLamports`)
 - [x] Wire `apps/mobile` to live `API_BASE` (`● Devnet Live` via `adb reverse tcp:8787`, pull-to-refresh, transparent Bond vs Stake breakdown)
-- [x] Install Solflare Devnet MWA Wallet on Android Emulator, fund `0.5 SOL` (`tx: 59RfkAWh…`), sign live Devnet Call #2 via MWA 2.0, and switch to `signTransactions` + direct RPC broadcast (`c25f9bf`)
+- [x] Install Solflare Devnet MWA Wallet on Android Emulator, fund `0.5 SOL` (`tx: 59RfkAWh…`), sign live Devnet Call #2 & Call #3 (`tx: 2oY9YPJbS97BBdPsJG…`) via MWA 2.0 `signAndSendTransactions` with Devnet RPC receipt fallback (`ec89c32`)
 
 ## Phase 5: Polish, Mas Youvandra Review & Final Submission (IN PROGRESS)
 - [x] Sync all repo docs (`README.md`, `contracts.md`, `architecture.md`, `writeup.md`, `security.md`, `demo-runbook.md`, `LICENSE`) with actual stack & live Devnet receipts
 - [x] Polish `apps/web` preview with Thread Replies (`In Pool` vs `Spectator` badges), `● Solana Devnet Live` badge & Solana Explorer Devnet links
-- [ ] Build Standalone Signed Release APK (`cd android && .\gradlew assembleRelease`) and verify sideload install
+- [x] Build Standalone Signed Release APK (`cd android && .\gradlew assembleRelease`) and verify sideload install without Metro (live Devnet Sign-in, Detail Thread Reply, and Open Call #3 confirmed end-to-end)
 - [ ] Send Review PR & APK to Mas Youvandra and apply review notes
 - [ ] Record 3-minute live Devnet demo video and submit on `hack.dev3pack.xyz`

@@ -21,13 +21,13 @@ Living execution tracker for **Dev3pack Global Hackathon (27–29 Nov 2026)**.
 
 ---
 
-## Phase 3: Solana Devnet Deployment & Seeding (NEXT)
-- [ ] Configure Solana CLI Devnet deployer wallet & fund with Devnet SOL
-- [ ] Deploy `percaya_amm.so` and `percaya.so` to Solana Devnet
-- [ ] Extend `scripts/seed-devnet.ts` to initialize `GlobalConfig`, mint `tBONK`/`tWIF`/`tSKR`, seed 3 AMM pools, and mint Devnet Token-2022 `NonTransferable` Seeker Genesis NFTs
-- [ ] Run `scripts/move-price.ts` against Devnet AMM to verify live price movement
+## Phase 3: Solana Devnet Deployment & Seeding (DONE)
+- [x] Configure Solana CLI Devnet deployer wallet (`68XA2EopzsaZxtHbDxr7gey1eHBBvQDX4D9vTkW44y2i`) & fund with Devnet SOL
+- [x] Deploy `percaya_amm.so` (`AzU89s97v6XKT8oKkyV82p2k17z1eK2aFhGwrXTpquxz`) and `percaya.so` (`8ZMPKC79FfVvKsQXudDUJfGmmSMRd1HkY2QU7anrCcf6`) to Solana Devnet
+- [x] Seed `GlobalConfig` (`F559AB2MjAZModvfDw9oqqpy8gNEuS3AFYZbFTii8aa7`), 3 SPL tokens (`tBONK`, `tWIF`, `tSKR`) + 3 AMM pools, and Token-2022 `NonTransferable` Seeker Genesis NFT (`GsRTNhTYJg4RG7NgJ8enT1wGAvEfghhchjy25f8WmBLL`)
+- [x] Verify live `scripts/move-price.ts` swap against Devnet `$tBONK` AMM (`tx: 2wwPbx8G...`)
 
-## Phase 4: Live Chain Mode (`DATA=chain`) — Indexer, Keeper & Mobile Tx Wiring
+## Phase 4: Live Chain Mode (`DATA=chain`) — Indexer, Keeper & Mobile Tx Wiring (NEXT)
 - [ ] Implement `apps/api/src/indexer.ts` (Anchor PDA + log polling into store) and `apps/api/src/keeper.ts` (simulate + send `checkpoint`, `sell`, `refund`, `split`)
 - [ ] Wire `apps/mobile` to read live calls/replies from `API_BASE` and build/sign real Devnet Anchor transactions (`open_call`, `deposit`, `buy`, `checkpoint`, `sell`, `claim`, `verify_seeker_genesis`) via MWA 2.0
 - [ ] Install Solana Mobile Seed Vault Simulator / FakeWallet APK onto Emulator via `adb install` and verify end-to-end biometric/PIN signing

@@ -1,0 +1,55 @@
+{
+  "cluster": "devnet",
+  "rpcUrl": "https://api.devnet.solana.com",
+  "seededAt": "2026-11-27T01:01:51.349Z",
+  "admin": "68XA2EopzsaZxtHbDxr7gey1eHBBvQDX4D9vTkW44y2i",
+  "programs": {
+    "percaya": "8ZMPKC79FfVvKsQXudDUJfGmmSMRd1HkY2QU7anrCcf6",
+    "percayaAmm": "AzU89s97v6XKT8oKkyV82p2k17z1eK2aFhGwrXTpquxz"
+  },
+  "configPda": "F559AB2MjAZModvfDw9oqqpy8gNEuS3AFYZbFTii8aa7",
+  "demoSeekerGenesis": {
+    "caller": "68XA2EopzsaZxtHbDxr7gey1eHBBvQDX4D9vTkW44y2i",
+    "callerRecordPda": "D2aNBvihf11T9sEFgHuyzW9BESzP96BYS1u6mwYihGvJ",
+    "genesisMint": "GsRTNhTYJg4RG7NgJ8enT1wGAvEfghhchjy25f8WmBLL",
+    "genesisRegistryPda": "qnUvxbY6jyBgWUJ1hr81mmJimWNuptceiG6qKDbojtQ"
+  },
+  "tokens": [
+    {
+      "symbol": "tBONK",
+      "name": "Testnet Bonk",
+      "decimals": 6,
+      "mint": "5Y5uHKfMzJz1VREgJWE8D2vHmxkrTHetzS1uoUebgukR",
+      "ammPool": "GgTd1UV5SPntSPfsJVEsWafvMk7EWJyQ6i5YwAsNzuiH",
+      "ammSolVault": "Eb9q6gYRkkrAz6eYaLU2DopWrDm6ckkEXwnKLfX7nqeU",
+      "ammTokenVault": "HVs7FALVrrcKGZkFpLtkLda2hwYHv4vWALvmT6EyVdJt",
+      "allowedTokenPda": "3oCk56y4pAPdCbXqVgCLift1kWGPuJzVpiyHf3jBReSc",
+      "adminTokenAccount": "EYm6H6b4RkNarAj8Pk7FsJtNmSAjVjahFSFC1qcWEV7N",
+      "initialSol": 0.7
+    },
+    {
+      "symbol": "tWIF",
+      "name": "Testnet dogwifhat",
+      "decimals": 6,
+      "mint": "AVdTeM9FEHiBdnPfZ8hKKknkStTxcLrZNkVSRnQoJLDn",
+      "ammPool": "DTE5Ujr19xh982gGN2h67tdMrYGDpxtsTv1eJaSknxmw",
+      "ammSolVault": "GinfgkPyy1QVB2uKZwdjEbj3kQycZStqkcnAU9VnC2Zr",
+      "ammTokenVault": "D34YHx3r8jytAe3ZaoPHNRmiN2rvqEvb8tTCkSfe1erK",
+      "allowedTokenPda": "335n588VqkJJyzhSh1NzMFZLaycyrX94JeDCfbBAgeRX",
+      "adminTokenAccount": "4GjgwCe5v4d8ACNNiFLn65xpoMQSDEgqWnzWecJYfYj6",
+      "initialSol": 0.6
+    },
+    {
+      "symbol": "tSKR",
+      "name": "Testnet Seeker Ecosystem",
+      "decimals": 6,
+      "mint": "F1vMDdVFHVwBQBcRW5SgqVHEs8P4ayWTmffhCWBMYyip",
+      "ammPool": "4XmQwqt8su3HrsSCmtDXx4iXzj3zcMZCkEmdiwUCE4i6",
+      "ammSolVault": "7QW4j9eqkg7FTLSd56fq3t4f7KB1vDndMThx5cnZumYu",
+      "ammTokenVault": "A9JSN2yfi2ZQFkVtVFoaSzCzzNud327cUNsfCFpPNtwZ",
+      "allowedTokenPda": "3WTxmwUhaqmy8Z4NJ7SSQ3pT6Sh2JhPbpqYhtPrn8vQc",
+      "adminTokenAccount": "FJGMfbpErem7jn1Sfyppa8h6BNagrjVgSuDBidLNmhym",
+      "initialSol": 0.6
+    }
+  ]
+}

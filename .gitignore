@@ -27,6 +27,9 @@ apps/mobile/.expo/
 .env.*.local
 *-keypair.json
 !programs/**/*-keypair.json
+*.keystore
+*.jks
+keystore.properties
 
 # OS & IDE
 .DS_Store

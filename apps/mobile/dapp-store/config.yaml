@@ -8,9 +8,9 @@ app:
   name: percaya
   android_package: com.percaya.seeker
   urls:
-    license_url: https://percaya.app/docs
-    copyright_url: https://percaya.app/docs
-    privacy_policy_url: https://percaya.app/docs
+    license_url: https://percaya.app/terms
+    copyright_url: https://percaya.app/terms
+    privacy_policy_url: https://percaya.app/privacy
     website: https://percaya.app
 
 release:
@@ -24,7 +24,8 @@ release:
       name: percaya
       short_description: One buy. One sale. The same price for everyone.
       long_description: >
-        Pooled crypto calls on Solana Mobile Seeker. A caller opens a pool on one SPL token,
-        fixes every exit rule up front, and locks their own SOL at the same entry and exit price
-        as everyone else. Tiers 1-3 bind to a 1-per-device Seeker Genesis Token.
-      new_in_version: Initial Dev3pack Solana Mobile Seeker release.
+        Skin-in-the-Game Threads for Solana Mobile Seeker. Every post is an immutable on-chain
+        pooled call where the caller locks SOL first under fixed TP/SL/max-hold rules. Scan Call QR
+        codes with your phone camera, sign via MWA 2.0 / Seed Vault, and get native Android alerts
+        when pools buy or settle. Tiers 1-3 bind to a 1-per-device Token-2022 Seeker Genesis Token.
+      new_in_version: Dev3pack Global Hackathon release (MWA 2.0, on-device Devnet RPC, Camera QR, Android notifications).

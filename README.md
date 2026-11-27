@@ -18,7 +18,7 @@ The pool buys once for everyone, sells once for everyone when two spaced on-chai
 
 ## Contents
 
-[The problem](#the-problem) · [Skin-in-the-Game Threads & Seeker](#skin-in-the-game-threads--seeker) · [How it works](#how-it-works) · [Worked example](#worked-example) · [Architecture](#architecture) · [Guarantees](#guarantees) · [Deployment](#deployment) · [Getting started](#getting-started) · [Testing](#testing) · [Tech stack](#tech-stack) · [Repository](#repository) · [Known limits](#known-limits) · [Origin & credits](#origin--credits) · [Documentation](#documentation)
+[The problem](#the-problem) · [Skin-in-the-Game Threads & Seeker](#skin-in-the-game-threads--seeker) · [How it works](#how-it-works) · [Worked example](#worked-example) · [Architecture](#architecture) · [Guarantees](#guarantees) · [Deployment](#deployment) · [Judge quick test](#judge-quick-test-90-seconds-on-apk) · [Getting started](#getting-started) · [Testing](#testing) · [Tech stack](#tech-stack) · [Repository](#repository) · [Known limits](#known-limits) · [Documentation](#documentation) · [Team & prior research](#team--prior-research)
 
 ---
 
@@ -36,7 +36,7 @@ Crypto calls happen on phones, inside mobile chat feeds, with windows measured i
 
 1. **No free shilling (`Call-as-a-Thread`).** The mobile app follows the familiar 5-tab **Threads** pattern (`Home`, `Callers`, `+ Post`, `Activity`, `Profile`) with `For you (Newest)` and `Following` feeds—except **you cannot publish a root post without locking SOL in an on-chain pool**. Inside any thread, replies signed via SIWS automatically display whether the commenter actually put SOL in (`In Pool · 0.50 SOL`) or is watching from the sidelines (`Spectator`).
 2. **Closing burner-wallet resets (`Seeker Genesis Token` + `GenesisRegistry` PDA).** On standard chains, a ruined caller spins up a fresh keypair for free. In `percaya`, Tiers 1–3 (`5×` to `20×` bond cap) require binding a 1-per-device **Token-2022 `NonTransferable` Seeker Genesis NFT** into a one-time `init` `GenesisRegistry` PDA (`[b"genesis", genesis_mint]`). One physical device maps to one permanent track record; a slash taints that Genesis Token permanently. Unverified wallets remain capped at Tier 0 (`2×` bond, `5%` max fee) and are labelled openly.
-3. **One-tap chat-to-Seed-Vault fills (`Solana Blinks` + `MWA 2.0`).** Every call exposes a Solana Action endpoint (`/actions.json` + `/api/actions/call/:id`) with dynamic calm SVG share cards and Android App Links (`/.well-known/assetlinks.json`), letting followers inspect locked rules and sign deposits directly via **Mobile Wallet Adapter 2.0** and **Seed Vault**.
+3. **Built for the phone in your pocket (`Camera QR` + `Android Push` + `MWA 2.0` + `Solana Blinks`).** Every call exposes an in-app **SVG QR code** (`percaya://c/:id`) that other Seeker/Android phones can scan directly via the built-in **`expo-camera` QR scanner**, native **Android push notifications** (`expo-notifications`) when watched or joined pools buy/settle/refund/split, and a Solana Action endpoint (`/actions.json` + `/api/actions/call/:id`) so followers sign deposits via **Mobile Wallet Adapter 2.0** (Seed Vault, Solflare, Phantom, or Fake Wallet) — even on a cold-installed APK with zero local backend via our on-device Devnet RPC engine (`chain-direct.ts`).
 
 ---
 
@@ -77,21 +77,21 @@ stateDiagram-v2
 
 ## Worked example
 
-`100 SOL` pooled (caller `10 SOL`, A `30 SOL`, B `40 SOL`, C `20 SOL`), `10%` profit share, sold for `130 SOL` gross (`1 SOL = 1,000,000,000 lamports`). Verified to the single lamport in `packages/core/src/math.test.ts` and `programs/percaya/tests/test_percaya.rs`:
+`20 SOL` pooled (caller `2 SOL`, A `6 SOL`, B `8 SOL`, C `4 SOL`), `10%` profit share, sold for `26 SOL` gross (`1 SOL = 1,000,000,000 lamports`). Exact integer math is verified to the single lamport in `packages/core/src/math.test.ts` and `programs/percaya/tests/test_percaya.rs`:
 
 ```text
-keeper  = 130.0000 × 0.1%              =   0.1300 SOL    (130,000,000 lamports)
-net     = 130.0000 − 0.1300            = 129.8700 SOL
-profit  = net − 100.0000               =  29.8700 SOL
-fee     = 10% of profit                =   2.9870 SOL
-payout  = net − fee                    = 126.8830 SOL    shared pro rata, caller included
+keeper  = 26.0000 × 0.1%              =   0.0260 SOL    (26,000,000 lamports)
+net     = 26.0000 − 0.0260            =  25.9740 SOL
+profit  = net − 20.0000               =   5.9740 SOL
+fee     = 10% of profit               =   0.5974 SOL
+payout  = net − fee                   =  25.3766 SOL    shared pro rata, caller included
 
-caller   15.6753 SOL   (12.6883 share + 2.9870 fee)
-A 38.0649 SOL · B 50.7532 SOL · C 25.3766 SOL
+caller   3.1350 SOL   (2.5376 share + 0.5974 fee)
+A 7.6129 SOL · B 10.1506 SOL · C 5.0753 SOL
 every participant: +26.88% · on-chain record: +26.88% (+2688 bps)
 ```
 
-Sold for `70 SOL` gross instead, keeper receives `0.0700 SOL`, `net = 69.9300 SOL`, `profit = 0`, `fee = 0`. Everyone—the caller included—ends at **`−30.07%`** (`-3007 bps`), and the caller's record logs a loss of `−30.07%`.
+Sold for `14 SOL` gross instead, keeper receives `0.0140 SOL`, `net = 13.9860 SOL`, `profit = 0`, `fee = 0`. Everyone—the caller included—ends at **`−30.07%`** (`-3007 bps`), and the caller's record logs a loss of `−30.07%`.
 
 ---
 
@@ -163,9 +163,25 @@ Live on **Solana Devnet** (`packages/core/src/devnet-deployment.json`, deployed 
 | **`$tSKR` Mint / AMM Pool** | `F1vMDdV…Yyip` / `4XmQwqt8su3HrsSCmtDXx4iXzj3zcMZCkEmdiwUCE4i6` | [Pool](https://explorer.solana.com/address/4XmQwqt8su3HrsSCmtDXx4iXzj3zcMZCkEmdiwUCE4i6?cluster=devnet) |
 | **Token-2022 Seeker Genesis NFT** | `GsRTNhTYJg4RG7NgJ8enT1wGAvEfghhchjy25f8WmBLL` | [Mint](https://explorer.solana.com/address/GsRTNhTYJg4RG7NgJ8enT1wGAvEfghhchjy25f8WmBLL?cluster=devnet) |
 | **Live Devnet Call #1 (`open_call`)** | `3tJumYzk…919bjNBa1` | [Transaction](https://explorer.solana.com/tx/3tJumYzkJAXEG344kjWZkDtjngnNzVMdRYgB9SWDjngYT8UFVRMXKEHsRNMfkE3codqx93cTxg15Ebi919bjNBa1?cluster=devnet) |
+| **Live Devnet Call #3 (MWA 2.0 APK)** | `2oY9YPJbS97BBdPsJG…` | Signed live on standalone `app-release.apk` via Solflare MWA |
 | **Live Devnet AMM Swap (`move-price`)** | `2wwPbx8G…V3n7GmGQ` | [Transaction](https://explorer.solana.com/tx/2wwPbx8GJa9Dsh2s5Y9w75i6py5hmqK8KoJUMUdCs9SaT6FCVUGwo5bz2XXXfc8WCoRGu6yx2Zs4F2oQV3n7GmGQ?cluster=devnet) |
 
 **Devnet demo parameters:** `0.05 SOL` min bond, `0.01 SOL` min pool, `60s–600s` windows, `120s–1800s` max hold, `45s` checkpoint gap, `2%` max buy price impact, `0.1%` keeper reward.
+
+---
+
+## Judge quick test (90 seconds on APK)
+
+No local backend or `adb reverse` is required to evaluate the Android APK:
+
+1. **Install `app-release.apk`** on a Solana Seeker, physical Android device, or Android Emulator (with Seed Vault, Solflare Devnet, Phantom Devnet, or MWA Fake Wallet).
+2. **Cold boot → `● Devnet Live`:** The app automatically reads live `CallPool`, `CallerRecord`, `Position`, and `AmmPool` PDAs directly from `https://api.devnet.solana.com` via `apps/mobile/src/chain-direct.ts`.
+3. **Connect via MWA 2.0:** Tap **`Sign in`** (supports 1-prompt SIWS and automatically falls back to standard `authorize` for Fake Wallet).
+4. **0-SOL Wallet? Tap `Claim Judge Test SOL`:** If your test wallet holds `< 0.06 SOL`, a calm banner at the top of `Home` (and in `Profile`) lets you fund `+0.08 Devnet SOL` in one tap.
+5. **Sign on Devnet + Test Native Phone Features:**
+   - Tap **`+ Post`** to open an immutable pooled call (auto-bundles `register_caller + post_bond + open_call` in 1 MWA prompt) or join an `Open` pool.
+   - Tap **`QR`** inside any Call thread to display its scannable `percaya://c/:id` QR code, or tap **`Scan`** in the top bar to scan `docs/assets/qr-call-3.png` with the native camera.
+   - Tap **`🔔 Watch`** on any call to enable native Android system notifications when its on-chain state transitions.
 
 ---
 
@@ -216,8 +232,12 @@ node --experimental-strip-types --test packages/core/src/math.test.ts
 # 3. API, SIWS Ed25519, Thread Replies & Solana Blinks — 3/3 tests
 npm run test:api
 
-# 4. Full TypeScript check & Web production bundle
+# 4. Mobile QR link parser & watched-call notification diff — 6/6 tests
+npm --workspace @percaya/mobile run test
+
+# 5. Full TypeScript check & Web production bundle
 npm run typecheck
+npm --workspace @percaya/mobile run typecheck
 npm --workspace @percaya/web run build
 ```
 
@@ -229,8 +249,8 @@ npm --workspace @percaya/web run build
 |---|---|
 | Solana Programs | Rust (`1.89.0` / SBF `v1.57`), Anchor CLI `1.2.2` (`anchor-lang 1.2.0`), Solana CLI `4.1.2`, raw SPL Token & Token-2022 TLV compat |
 | Smart Contract Testing | `LiteSVM 0.15.0` (`solana-message 4`, `solana-transaction 4`, `solana-keypair 3`) |
-| Mobile App (Primary) | Expo SDK `52`, React Native `0.76.7` (Hermes), `@solana-mobile/mobile-wallet-adapter-protocol-web3js` `2.1.3` (MWA 2.0), `expo-haptics`, `dapp-store/config.yaml` |
-| Backend API & Keeper | Node.js `24` (`--experimental-strip-types`), Hono `4.7.4`, `@solana/web3.js 1.98`, live PDA Indexer + simulating Auto-Keeper (`devnet-sync.ts`), SIWS Ed25519 (`node:crypto`), Solana Actions (`ACTIONS.json`), dynamic SVG cards |
+| Mobile App (Primary) | Expo SDK `52`, React Native `0.76.7` (Hermes), `@solana-mobile/mobile-wallet-adapter-protocol-web3js` `2.1.3` (MWA 2.0 + `useMobileWallet`), on-device Devnet RPC (`chain-direct.ts`), `expo-camera`, `react-native-qrcode-svg`, `expo-notifications`, `expo-haptics`, `dapp-store/config.yaml` |
+| Backend API & Keeper | Node.js `24` (`--experimental-strip-types`), Hono `4.7.4`, `@solana/web3.js 1.98`, live PDA Indexer + simulating Auto-Keeper (`devnet-sync.ts`), SIWS Ed25519 (`node:crypto`), Solana Actions (`ACTIONS.json`), rate-limited `/api/faucet`, dynamic SVG cards |
 | Web Preview | Vite `6`, React `18`, Tailwind CSS `3.4`, `lucide-react` |
 
 ---
@@ -272,15 +292,15 @@ docs/
 
 ---
 
-## Origin & credits
-
-`percaya` adapts the pooled-call accountability mechanism and calm editorial design language originally created in [`youvandra/trustpool`](https://github.com/youvandra/trustpool) (MIT License, Monad testnet) and re-architects it from scratch for **Solana (Anchor / Rust)**, **Solana Mobile Seeker (MWA 2.0 + Token-2022 Genesis)**, **Solana Blinks**, and a **Skin-in-the-Game Threads** mobile experience. Built by Azhar with architecture and security review by Youvandra.
-
----
-
 ## Documentation
 
 - [`docs/prd.md`](docs/prd.md) · [`docs/contracts.md`](docs/contracts.md) · [`docs/architecture.md`](docs/architecture.md) · [`docs/design.md`](docs/design.md) · [`docs/security.md`](docs/security.md) · [`docs/writeup.md`](docs/writeup.md) · [`docs/demo-runbook.md`](docs/demo-runbook.md) · [`PROGRESS.md`](PROGRESS.md)
+
+---
+
+## Team & prior research
+
+Built from scratch during the **Dev3pack Global Hackathon (27–29 November 2026)** by **Azhar** and **Youvandra**. All Rust/Anchor programs (`percaya`, `percaya_amm`), Token-2022 Seeker Genesis registry, Expo React Native Android app (MWA 2.0, on-device Devnet RPC, Camera QR, Android push notifications), and Solana Blinks API were written newly during the hackathon, building on our team's earlier EVM pooled-execution research ([`youvandra/trustpool`](https://github.com/youvandra/trustpool), MIT).
 
 ---
 

@@ -32,8 +32,14 @@ import {
 } from 'react-native';
 import { useMobileWallet } from './src/hooks/useMobileWallet';
 import { CallQrModal, CallScannerModal } from './src/components/CallQr';
+import { JudgeChecklistCard, WelcomeModal } from './src/components/OnboardingGuide';
 import { diffCallStates } from './src/call-diff';
 import { ensureNotificationPermission, notifyNow } from './src/notifications';
+import {
+  computeOnboardingSteps,
+  explainTierBadge,
+  type OnboardingStepId,
+} from './src/onboarding';
 import {
   buildDepositTxDirect,
   buildOpenCallTxDirect,
@@ -223,6 +229,11 @@ export default function App() {
   const [watching, setWatching] = useState<number[]>([6, 5]);
   const [scannerOpen, setScannerOpen] = useState(false);
   const [qrCallId, setQrCallId] = useState<number | null>(null);
+  const [welcomeOpen, setWelcomeOpen] = useState(true);
+  const [checklistHidden, setChecklistHidden] = useState(false);
+  const [verifyingSgt, setVerifyingSgt] = useState(false);
+  const [localSgtMint, setLocalSgtMint] = useState<string | null>(null);
+  const [interactedCall, setInteractedCall] = useState(false);
   const prevCallsRef = useRef<Pick<CallDetail, 'callId' | 'state'>[]>([]);
 
   // Native Android notification when a watched / joined call changes on-chain state.
@@ -281,6 +292,93 @@ export default function App() {
     [callers, session],
   );
 
+  useEffect(() => {
+    setLocalSgtMint(null);
+  }, [session?.pubkey]);
+
+  const isMySeekerVerified = Boolean(myCallerRecord?.isSeekerVerified || localSgtMint);
+  const hasMyCallActivity = useMemo(
+    () =>
+      interactedCall ||
+      Boolean(
+        session &&
+          calls.some(
+            (c) =>
+              c.caller === session.pubkey ||
+              c.positions.some((p) => p.participant === session.pubkey),
+          ),
+      ),
+    [interactedCall, session, calls],
+  );
+
+  const onboardingState = useMemo(
+    () =>
+      computeOnboardingSteps({
+        connected: Boolean(session),
+        balanceSol,
+        isSeekerVerified: isMySeekerVerified,
+        hasInteractedCall: hasMyCallActivity,
+      }),
+    [session, balanceSol, isMySeekerVerified, hasMyCallActivity],
+  );
+
+  const handleVerifySeekerGenesis = async () => {
+    void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    if (!session) {
+      await handleConnectMwa();
+      return;
+    }
+    setVerifyingSgt(true);
+    try {
+      const targetApi = backendOnline ? apiBase : DEFAULT_PUBLIC_API;
+      const res = await fetchWithTimeout(
+        `${targetApi}/api/devnet/issue-sgt`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ caller: session.pubkey }),
+        },
+        12_000,
+      );
+      const data = (await res.json()) as {
+        transaction?: string;
+        genesisMint?: string;
+        error?: string;
+      };
+      if (!res.ok || !data.transaction) {
+        throw new Error(data.error || 'Unable to prepare Devnet Seeker Genesis transaction');
+      }
+      const sig = await signAndSend(data.transaction);
+      setLocalSgtMint(data.genesisMint ?? 'verified');
+      void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      Alert.alert(
+        'Seeker Genesis Verified On-Chain',
+        `Bound 1-per-device Token-2022 NonTransferable Genesis NFT to GenesisRegistry PDA.\n\nMint: ${(data.genesisMint ?? '').slice(0, 16)}…\nTx: ${sig.slice(0, 18)}…`,
+      );
+      void fetchLiveFeed();
+    } catch (err) {
+      Alert.alert(
+        'Seeker Genesis Notice',
+        err instanceof Error ? err.message : 'Unable to verify Seeker Genesis Token',
+      );
+    } finally {
+      setVerifyingSgt(false);
+    }
+  };
+
+  const handleChecklistAction = (stepId: OnboardingStepId) => {
+    void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    if (stepId === 'connect') {
+      void handleConnectMwa();
+    } else if (stepId === 'fund') {
+      void claimTestSol();
+    } else if (stepId === 'sgt') {
+      void handleVerifySeekerGenesis();
+    } else if (stepId === 'call') {
+      setTab('compose');
+    }
+  };
+
   const toggleFollow = (callerPubkey: string) => {
     void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     setFollowing((prev) =>
@@ -299,6 +397,7 @@ export default function App() {
 
   const handleCallScanned = (callId: number) => {
     setScannerOpen(false);
+    setInteractedCall(true);
     if (calls.some((c) => c.callId === callId)) {
       setSelectedCallId(callId);
     } else {
@@ -354,6 +453,7 @@ export default function App() {
         txBase64 = direct.transaction;
       }
       const sig = await signAndSend(txBase64);
+      setInteractedCall(true);
       void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       setWatching((prev) => (prev.includes(call.callId) ? prev : [...prev, call.callId]));
       void ensureNotificationPermission();
@@ -470,6 +570,7 @@ export default function App() {
         });
       }
       const sig = await signAndSend(txData.transaction);
+      setInteractedCall(true);
       void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       Alert.alert(
         `Call #${txData.callId} Published on Devnet`,
@@ -532,6 +633,7 @@ export default function App() {
         txBase64 = direct.transaction;
       }
       const sig = await signAndSend(txBase64);
+      setInteractedCall(true);
       void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       Alert.alert(`${action.toUpperCase()} Confirmed on Devnet`, `Tx: ${sig.slice(0, 18)}…`);
       void fetchLiveFeed();
@@ -572,7 +674,17 @@ export default function App() {
           </View>
         </View>
 
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+          <Pressable
+            style={[styles.walletBtn, { backgroundColor: C.subtle, paddingHorizontal: 10 }]}
+            onPress={() => {
+              void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              setWelcomeOpen(true);
+            }}
+            accessibilityLabel="Open Quick Guide"
+          >
+            <Text style={[styles.walletBtnText, { color: C.ink2 }]}>?</Text>
+          </Pressable>
           <Pressable
             style={[styles.walletBtn, { backgroundColor: C.accentFill }]}
             onPress={() => {
@@ -655,6 +767,16 @@ export default function App() {
               <Text style={styles.noRankingCaption}>Skin-in-the-game only</Text>
             </View>
 
+            {!checklistHidden && !onboardingState.allDone && (
+              <JudgeChecklistCard
+                steps={onboardingState.steps}
+                completedCount={onboardingState.completedCount}
+                busy={busy || connecting || funding || verifyingSgt}
+                onAction={handleChecklistAction}
+                onDismiss={() => setChecklistHidden(true)}
+              />
+            )}
+
             {session && balanceSol !== null && balanceSol < 0.06 && (
               <View style={[styles.card, { borderColor: C.accent, backgroundColor: C.accentSoft }]}>
                 <Text style={styles.callerName}>
@@ -720,7 +842,14 @@ export default function App() {
                         <Text style={styles.callerName}>
                           {displayIdentity(call.caller, call.callerSkr)}
                         </Text>
-                        <View
+                        <Pressable
+                          onPress={() => {
+                            const info = explainTierBadge(
+                              call.callerSeekerVerified,
+                              call.callerTier,
+                            );
+                            Alert.alert(info.title, info.body);
+                          }}
                           style={[
                             styles.tierPill,
                             call.callerSeekerVerified ? styles.tierPillVerified : styles.tierPillRaw,
@@ -736,7 +865,7 @@ export default function App() {
                               ? `Seeker T${call.callerTier}`
                               : 'Unverified T0'}
                           </Text>
-                        </View>
+                        </Pressable>
                         <Text style={styles.timeText}>{timeAgo(call.openedAt)}</Text>
                       </Pressable>
 
@@ -1164,11 +1293,24 @@ export default function App() {
                     Devnet Balance:{' '}
                     {balanceSol !== null ? `${balanceSol.toFixed(4)} SOL` : 'Checking RPC…'}
                     {'\n'}
-                    {myCallerRecord
-                      ? `${myCallerRecord.isSeekerVerified ? 'Seeker Genesis Verified' : 'Unverified T0'} · Bond ${formatSolFloor(myCallerRecord.bondLamports, 3)} SOL · ${myCallerRecord.settled} settled · Tier ${myCallerRecord.tierInfo.tier}`
-                      : 'No CallerRecord PDA yet — opening your first call auto-registers and posts your 0.05 SOL reusable bond.'}
+                    {myCallerRecord || isMySeekerVerified
+                      ? `${isMySeekerVerified ? '✓ Seeker Genesis Verified (Token-2022)' : 'Unverified T0 (2× cap)'} · Bond ${formatSolFloor(myCallerRecord?.bondLamports ?? '0', 3)} SOL · ${myCallerRecord?.settled ?? 0} settled · Tier ${myCallerRecord?.tierInfo.tier ?? 0}`
+                      : 'No CallerRecord PDA yet — verify Seeker Genesis below or open your first call to auto-register.'}
                   </Text>
-                  <View style={[styles.rowBetween, { marginTop: 12, gap: 8 }]}>
+                  {!isMySeekerVerified && (
+                    <Pressable
+                      style={[styles.whiteOnBlueBtn, { marginTop: 12 }]}
+                      disabled={verifyingSgt || busy}
+                      onPress={handleVerifySeekerGenesis}
+                    >
+                      <Text style={styles.whiteOnBlueBtnText}>
+                        {verifyingSgt
+                          ? 'Minting & Binding Token-2022 SGT…'
+                          : 'Verify Seeker Genesis NFT (Unlock Tier 1–3)'}
+                      </Text>
+                    </Pressable>
+                  )}
+                  <View style={[styles.rowBetween, { marginTop: 10, gap: 8 }]}>
                     <Pressable
                       style={[styles.whiteOnBlueBtn, { flex: 1 }]}
                       disabled={funding}
@@ -1235,6 +1377,12 @@ export default function App() {
         ))}
       </View>
 
+      <WelcomeModal
+        visible={welcomeOpen}
+        connected={Boolean(session)}
+        onClose={() => setWelcomeOpen(false)}
+        onConnect={() => void handleConnectMwa()}
+      />
       <CallScannerModal
         visible={scannerOpen}
         onClose={() => setScannerOpen(false)}

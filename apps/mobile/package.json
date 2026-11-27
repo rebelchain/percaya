@@ -10,7 +10,7 @@
     "build:apk": "cd android && ./gradlew assembleRelease",
     "setup:signing": "node scripts/setup-release-signing.mjs",
     "typecheck": "tsc --noEmit",
-    "test": "node --experimental-strip-types --test src/call-links.test.ts src/call-diff.test.ts scripts/setup-release-signing.test.mjs",
+    "test": "node --experimental-strip-types --test src/call-links.test.ts src/call-diff.test.ts src/onboarding.test.ts scripts/setup-release-signing.test.mjs",
     "ios": "expo run:ios"
   },
   "dependencies": {

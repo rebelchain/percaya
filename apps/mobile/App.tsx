@@ -30,7 +30,7 @@ import {
   TextInput,
   View,
 } from 'react-native';
-import { connectSeekerWallet, signAndSendViaSeedVault, type SeekerSession } from './src/mwa';
+import { useMobileWallet } from './src/hooks/useMobileWallet';
 import {
   buildDepositTxDirect,
   buildOpenCallTxDirect,
@@ -218,8 +218,17 @@ export default function App() {
   const [watching, setWatching] = useState<number[]>([6, 5]);
   const [replyDraft, setReplyDraft] = useState('');
   const [depositSol, setDepositSol] = useState<string>('0.005');
-  const [session, setSession] = useState<SeekerSession | null>(null);
   const [busy, setBusy] = useState(false);
+  const {
+    session,
+    balanceSol,
+    connecting,
+    funding,
+    connect: handleConnectMwa,
+    disconnect: handleDisconnectMwa,
+    claimTestSol,
+    signAndSend,
+  } = useMobileWallet(backendOnline ? apiBase : null);
 
   // 3-Step Compose Call Thread Wizard (persisted across Android MWA Activity switches)
   const [wizStep, setWizStep] = useState<1 | 2 | 3>(1);
@@ -248,30 +257,10 @@ export default function App() {
     [calls, selectedCallId],
   );
 
-  const handleConnectMwa = async () => {
-    void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    setBusy(true);
-    try {
-      const s = await connectSeekerWallet(apiBase);
-      setSession(s);
-      void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    } catch {
-      setSession({
-        pubkey: DEMO_CALLERS[1].pubkey, // rina.skr
-        skrName: 'rina.skr',
-        isSeekerVerified: true,
-        mwaAuthToken: null,
-        apiBearerToken: null,
-        simulated: true,
-      });
-      Alert.alert(
-        'Seed Vault Simulator Active',
-        'Signed in as rina.skr (Seeker Genesis Verified) for live Threads walkthrough.',
-      );
-    } finally {
-      setBusy(false);
-    }
-  };
+  const myCallerRecord: CallerRecord | null = useMemo(
+    () => (session ? callers.find((c) => c.pubkey === session.pubkey) ?? null : null),
+    [callers, session],
+  );
 
   const toggleFollow = (callerPubkey: string) => {
     void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -331,7 +320,7 @@ export default function App() {
         });
         txBase64 = direct.transaction;
       }
-      const sig = await signAndSendViaSeedVault(txBase64, session.mwaAuthToken);
+      const sig = await signAndSend(txBase64);
       void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       Alert.alert('Deposited on Solana Devnet', `Signature: ${sig.slice(0, 18)}…`);
       void fetchLiveFeed();
@@ -445,7 +434,7 @@ export default function App() {
           thesis: wizThesis,
         });
       }
-      const sig = await signAndSendViaSeedVault(txData.transaction, session.mwaAuthToken);
+      const sig = await signAndSend(txData.transaction);
       void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       Alert.alert(
         `Call #${txData.callId} Published on Devnet`,
@@ -507,7 +496,7 @@ export default function App() {
         });
         txBase64 = direct.transaction;
       }
-      const sig = await signAndSendViaSeedVault(txBase64, session.mwaAuthToken);
+      const sig = await signAndSend(txBase64);
       void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       Alert.alert(`${action.toUpperCase()} Confirmed on Devnet`, `Tx: ${sig.slice(0, 18)}…`);
       void fetchLiveFeed();
@@ -548,9 +537,17 @@ export default function App() {
           </View>
         </View>
 
-        <Pressable style={styles.walletBtn} onPress={handleConnectMwa} disabled={busy}>
+        <Pressable
+          style={styles.walletBtn}
+          onPress={session ? () => setTab('profile') : handleConnectMwa}
+          disabled={busy || connecting}
+        >
           <Text style={styles.walletBtnText}>
-            {session ? displayIdentity(session.pubkey, session.skrName) : 'Sign in'}
+            {connecting
+              ? 'Connecting…'
+              : session
+                ? displayIdentity(session.pubkey, session.skrName)
+                : 'Sign in'}
           </Text>
         </Pressable>
       </View>
@@ -610,6 +607,27 @@ export default function App() {
               </View>
               <Text style={styles.noRankingCaption}>Skin-in-the-game only</Text>
             </View>
+
+            {session && balanceSol !== null && balanceSol < 0.06 && (
+              <View style={[styles.card, { borderColor: C.accent, backgroundColor: C.accentSoft }]}>
+                <Text style={styles.callerName}>
+                  Low Devnet Balance ({balanceSol.toFixed(4)} SOL)
+                </Text>
+                <Text style={[styles.thesisSnippet, { marginTop: 4 }]}>
+                  Testing with Fake Wallet or a fresh Seeker wallet? Claim 0.08 Devnet SOL to cover
+                  the reusable 0.05 SOL caller bond + stake.
+                </Text>
+                <Pressable
+                  style={[styles.accentBtn, { marginTop: 10 }]}
+                  disabled={funding}
+                  onPress={claimTestSol}
+                >
+                  <Text style={styles.primaryBtnText}>
+                    {funding ? 'Funding Devnet Wallet…' : 'Claim Judge Test SOL (+0.08 SOL)'}
+                  </Text>
+                </Pressable>
+              </View>
+            )}
 
             {/* Threads Feed */}
             {visibleCalls.map((call) => {
@@ -1089,24 +1107,57 @@ export default function App() {
             <View style={styles.anchorCard}>
               <Text style={styles.anchorEyebrow}>SEEKER PROFILE & CALLER BOND</Text>
               <Text style={styles.anchorTitle}>
-                {session ? displayIdentity(session.pubkey, session.skrName) : 'rina.skr (Preview)'}
+                {session
+                  ? displayIdentity(session.pubkey, myCallerRecord?.skrName ?? session.skrName)
+                  : 'Connect MWA 2.0 Wallet'}
               </Text>
-              <Text style={styles.anchorBody}>
-                Seeker Genesis Token (Token-2022 NonTransferable) linked · 0.40 SOL Bond · Tier 1
-                (5× cap, 10% profit-only fee).
-              </Text>
-              <Pressable
-                style={styles.whiteOnBlueBtn}
-                onPress={() => {
-                  void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-                  Alert.alert(
-                    'Seeker Genesis Verified',
-                    'Devnet NonTransferable Genesis NFT linked to GenesisRegistry PDA.',
-                  );
-                }}
-              >
-                <Text style={styles.whiteOnBlueBtnText}>Verify Seeker Genesis (Simulator)</Text>
-              </Pressable>
+              {session ? (
+                <>
+                  <Text style={styles.anchorBody}>
+                    Devnet Balance:{' '}
+                    {balanceSol !== null ? `${balanceSol.toFixed(4)} SOL` : 'Checking RPC…'}
+                    {'\n'}
+                    {myCallerRecord
+                      ? `${myCallerRecord.isSeekerVerified ? 'Seeker Genesis Verified' : 'Unverified T0'} · Bond ${formatSolFloor(myCallerRecord.bondLamports, 3)} SOL · ${myCallerRecord.settled} settled · Tier ${myCallerRecord.tierInfo.tier}`
+                      : 'No CallerRecord PDA yet — opening your first call auto-registers and posts your 0.05 SOL reusable bond.'}
+                  </Text>
+                  <View style={[styles.rowBetween, { marginTop: 12, gap: 8 }]}>
+                    <Pressable
+                      style={[styles.whiteOnBlueBtn, { flex: 1 }]}
+                      disabled={funding}
+                      onPress={claimTestSol}
+                    >
+                      <Text style={styles.whiteOnBlueBtnText}>
+                        {funding ? 'Funding…' : 'Claim Test SOL'}
+                      </Text>
+                    </Pressable>
+                    <Pressable
+                      style={[styles.whiteOnBlueBtn, { backgroundColor: 'rgba(255,255,255,0.18)' }]}
+                      onPress={handleDisconnectMwa}
+                    >
+                      <Text style={[styles.whiteOnBlueBtnText, { color: '#FFFFFF' }]}>
+                        Disconnect
+                      </Text>
+                    </Pressable>
+                  </View>
+                </>
+              ) : (
+                <>
+                  <Text style={styles.anchorBody}>
+                    Connect Solana Seeker Seed Vault, Solflare, Phantom, or the MWA Fake Wallet to
+                    open pooled calls, join active pools, and sign replies on Solana Devnet.
+                  </Text>
+                  <Pressable
+                    style={styles.whiteOnBlueBtn}
+                    disabled={connecting}
+                    onPress={handleConnectMwa}
+                  >
+                    <Text style={styles.whiteOnBlueBtnText}>
+                      {connecting ? 'Opening MWA Wallet…' : 'Connect via MWA 2.0'}
+                    </Text>
+                  </Pressable>
+                </>
+              )}
             </View>
           </>
         )}

@@ -1,4 +1,16 @@
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
 import type { CallState } from '@percaya/core';
+import {
+  Connection,
+  Keypair,
+  LAMPORTS_PER_SOL,
+  PublicKey,
+  SystemProgram,
+  Transaction,
+  sendAndConfirmTransaction,
+} from '@solana/web3.js';
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 import { streamSSE } from 'hono/streaming';
@@ -327,6 +339,83 @@ export function createApp(customStore?: PercayaStore) {
       return c.json(
         { error: err instanceof Error ? err.message : `Failed to build ${action} tx` },
         400,
+      );
+    }
+  });
+
+  // Rate-limited Judge Devnet Micro-Faucet (0.08 SOL / wallet / 6h) for 0-SOL Fake Wallet / Seeker testing
+  const faucetHistory = new Map<string, number>();
+  const FAUCET_COOLDOWN_MS = 6 * 60 * 60 * 1000;
+  const FAUCET_DRIP_LAMPORTS = 80_000_000; // 0.08 SOL (covers 0.05 bond + 0.01 stake + fees)
+
+  app.post('/api/faucet', async (c) => {
+    try {
+      const body = await c.req.json<{ pubkey?: string }>();
+      if (!body?.pubkey) {
+        return c.json({ error: 'Missing wallet pubkey' }, 400);
+      }
+      let recipient: PublicKey;
+      try {
+        recipient = new PublicKey(body.pubkey);
+      } catch {
+        return c.json({ error: 'Invalid Solana public key' }, 400);
+      }
+
+      const key = recipient.toBase58();
+      const lastDrip = faucetHistory.get(key) ?? 0;
+      if (Date.now() - lastDrip < FAUCET_COOLDOWN_MS) {
+        return c.json({ error: 'Wallet already funded recently on Devnet (6h cooldown)' }, 429);
+      }
+
+      const conn = new Connection(rpcUrl, 'confirmed');
+      let signer: Keypair | null = null;
+      try {
+        if (process.env.KEEPER_SECRET_KEY) {
+          signer = Keypair.fromSecretKey(Uint8Array.from(JSON.parse(process.env.KEEPER_SECRET_KEY)));
+        } else {
+          const kpPath = path.join(os.homedir(), '.config', 'solana', 'id.json');
+          if (fs.existsSync(kpPath)) {
+            signer = Keypair.fromSecretKey(
+              Uint8Array.from(JSON.parse(fs.readFileSync(kpPath, 'utf8'))),
+            );
+          }
+        }
+      } catch {
+        signer = null;
+      }
+
+      if (signer) {
+        const tx = new Transaction().add(
+          SystemProgram.transfer({
+            fromPubkey: signer.publicKey,
+            toPubkey: recipient,
+            lamports: FAUCET_DRIP_LAMPORTS,
+          }),
+        );
+        const signature = await sendAndConfirmTransaction(conn, tx, [signer], {
+          commitment: 'confirmed',
+        });
+        faucetHistory.set(key, Date.now());
+        return c.json({
+          ok: true,
+          signature,
+          amountSol: FAUCET_DRIP_LAMPORTS / LAMPORTS_PER_SOL,
+          source: 'devnet-faucet',
+        });
+      }
+
+      const signature = await conn.requestAirdrop(recipient, FAUCET_DRIP_LAMPORTS);
+      faucetHistory.set(key, Date.now());
+      return c.json({
+        ok: true,
+        signature,
+        amountSol: FAUCET_DRIP_LAMPORTS / LAMPORTS_PER_SOL,
+        source: 'rpc-airdrop',
+      });
+    } catch (err) {
+      return c.json(
+        { error: err instanceof Error ? err.message : 'Devnet faucet unavailable' },
+        500,
       );
     }
   });

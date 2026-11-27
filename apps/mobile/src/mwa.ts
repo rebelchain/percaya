@@ -1,5 +1,10 @@
 import { transact } from '@solana-mobile/mobile-wallet-adapter-protocol-web3js';
-import { Connection, PublicKey, VersionedTransaction } from '@solana/web3.js';
+import {
+  Connection,
+  LAMPORTS_PER_SOL,
+  PublicKey,
+  VersionedTransaction,
+} from '@solana/web3.js';
 
 export const APP_IDENTITY = {
   name: 'percaya',
@@ -7,7 +12,7 @@ export const APP_IDENTITY = {
   icon: 'favicon.ico',
 };
 
-const DEVNET_RPC = 'https://api.devnet.solana.com';
+export const DEVNET_RPC = 'https://api.devnet.solana.com';
 
 export interface SeekerSession {
   pubkey: string;
@@ -18,34 +23,54 @@ export interface SeekerSession {
   simulated: boolean;
 }
 
-/**
- * Connects to Seed Vault / Seed Vault Simulator via Mobile Wallet Adapter 2.0
- * and executes Sign-In With Solana (SIWS) in a single biometric prompt.
- */
-export async function connectSeekerWallet(apiBaseUrl: string): Promise<SeekerSession> {
-  let noncePayload: { nonce: string; domain: string; statement: string } | null = null;
+async function fetchShort(url: string, init?: RequestInit, timeoutMs = 2500) {
+  const ctrl = new AbortController();
+  const id = setTimeout(() => ctrl.abort(), timeoutMs);
   try {
-    const res = await fetch(`${apiBaseUrl}/api/auth/nonce`);
-    if (res.ok) {
-      noncePayload = await res.json();
+    return await fetch(url, { ...init, signal: ctrl.signal });
+  } finally {
+    clearTimeout(id);
+  }
+}
+
+/**
+ * Connects to Seed Vault, Solflare, Phantom, or Fake Wallet via Mobile Wallet Adapter 2.0.
+ * Attempts 1-prompt SIWS when an API nonce is available, and falls back gracefully to standard
+ * MWA `authorize` if the wallet (e.g. Fake Wallet / legacy MWA) does not support `sign_in_payload`.
+ */
+export async function connectSeekerWallet(apiBaseUrl: string | null): Promise<SeekerSession> {
+  let noncePayload: { nonce: string; domain: string; statement: string } | null = null;
+  if (apiBaseUrl) {
+    try {
+      const res = await fetchShort(`${apiBaseUrl}/api/auth/nonce`, undefined, 2000);
+      if (res.ok) {
+        noncePayload = await res.json();
+      }
+    } catch {
+      // Offline / direct Devnet mode — proceed with standard MWA authorize
     }
-  } catch {
-    // Offline / local fallback
   }
 
   const result = await transact(async (wallet) => {
-    const auth = await wallet.authorize({
-      chain: 'solana:devnet',
-      identity: APP_IDENTITY,
-      sign_in_payload: noncePayload
-        ? {
+    if (noncePayload) {
+      try {
+        return await wallet.authorize({
+          chain: 'solana:devnet',
+          identity: APP_IDENTITY,
+          sign_in_payload: {
             domain: noncePayload.domain,
             statement: noncePayload.statement,
             nonce: noncePayload.nonce,
-          }
-        : undefined,
+          },
+        });
+      } catch {
+        // Fallback for Fake Wallet / wallets without MWA 2.0 SIWS support
+      }
+    }
+    return wallet.authorize({
+      chain: 'solana:devnet',
+      identity: APP_IDENTITY,
     });
-    return auth;
   });
 
   const firstAccount = result.accounts[0];
@@ -53,18 +78,22 @@ export async function connectSeekerWallet(apiBaseUrl: string): Promise<SeekerSes
   const pubkey = new PublicKey(pubkeyBytes).toBase58();
 
   let apiBearerToken: string | null = null;
-  if (result.sign_in_result && noncePayload) {
+  if (apiBaseUrl && result.sign_in_result && noncePayload) {
     try {
       const signedMsgUtf8 = atob(result.sign_in_result.signed_message);
-      const verifyRes = await fetch(`${apiBaseUrl}/api/auth/verify`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          pubkey,
-          message: signedMsgUtf8,
-          signatureBase64: result.sign_in_result.signature,
-        }),
-      });
+      const verifyRes = await fetchShort(
+        `${apiBaseUrl}/api/auth/verify`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            pubkey,
+            message: signedMsgUtf8,
+            signatureBase64: result.sign_in_result.signature,
+          }),
+        },
+        3000,
+      );
       if (verifyRes.ok) {
         const verified = (await verifyRes.json()) as { token: string };
         apiBearerToken = verified.token;
@@ -82,6 +111,49 @@ export async function connectSeekerWallet(apiBaseUrl: string): Promise<SeekerSes
     apiBearerToken,
     simulated: false,
   };
+}
+
+/**
+ * Reads the connected wallet's live SOL balance directly from Solana Devnet RPC.
+ */
+export async function fetchDevnetBalanceSol(pubkey: string): Promise<number> {
+  const conn = new Connection(DEVNET_RPC, 'confirmed');
+  const lamports = await conn.getBalance(new PublicKey(pubkey), 'confirmed');
+  return lamports / LAMPORTS_PER_SOL;
+}
+
+/**
+ * Funds a 0-SOL judge / tester wallet on Solana Devnet via the hosted micro-faucet (0.08 SOL)
+ * or direct Devnet RPC `requestAirdrop` fallback.
+ */
+export async function requestJudgeDevnetFaucet(
+  pubkey: string,
+  apiBaseUrl: string | null,
+): Promise<{ signature: string; amountSol: number; source: 'api' | 'rpc' }> {
+  if (apiBaseUrl) {
+    try {
+      const res = await fetchShort(
+        `${apiBaseUrl}/api/faucet`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ pubkey }),
+        },
+        15_000,
+      );
+      if (res.ok) {
+        const data = (await res.json()) as { signature: string; amountSol: number };
+        return { signature: data.signature, amountSol: data.amountSol, source: 'api' };
+      }
+    } catch {
+      // Fall through to direct Devnet RPC airdrop
+    }
+  }
+
+  const conn = new Connection(DEVNET_RPC, 'confirmed');
+  const sig = await conn.requestAirdrop(new PublicKey(pubkey), Math.round(0.1 * LAMPORTS_PER_SOL));
+  await conn.confirmTransaction(sig, 'confirmed').catch(() => {});
+  return { signature: sig, amountSol: 0.1, source: 'rpc' };
 }
 
 /**

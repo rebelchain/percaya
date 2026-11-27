@@ -28,14 +28,15 @@ One-page operator checklist to run a clean, zero-hitch 3-minute live demo across
    - Open **Device Manager** → Start **`Medium_Phone_API_37.0`**.
    - Ensure **Solflare** (or **Phantom**) is installed on the Emulator, switched to **Solana Devnet**, and funded with `>= 0.5 SOL` Devnet (`https://faucet.solana.com/`).
 
-4. **PowerShell Windows — Sync Repo & Launch `percaya` on Emulator:**
+4. **PowerShell Windows — Install & Launch Standalone Release APK (No Metro Required):**
    ```powershell
    cd D:\Projects\percaya
    git pull origin main
-   cd apps\mobile
-   npx expo start --dev-client
+   adb reverse tcp:8787 tcp:8787   # Optional: only needed if using local API for replies/SSE
+   adb install -r D:\Projects\percaya\apps\mobile\android\app\build\outputs\apk\release\app-release.apk
+   adb shell monkey -p com.percaya.seeker -c android.intent.category.LAUNCHER 1
    ```
-   Press **`a`** to open `percaya` on the Emulator. Confirm the top bar pill reads **`● Devnet Live`** and **Call #1 (`$tBONK`)** is visible.
+   Confirm the top bar pill reads **`● Devnet Live`** (works both with local/hosted API and standalone via on-device `chain-direct.ts` direct Devnet RPC). To test the Camera QR scanner in Emulator, load `docs/assets/qr-call-3.png` into **Extended Controls → Camera → Virtual scene**.
 
 ---
 
@@ -55,10 +56,10 @@ One-page operator checklist to run a clean, zero-hitch 3-minute live demo across
   cd /home/rebel/.gemini/antigravity/scratch/percaya
   npm run move:price -- --token tBONK --sol 0.15
   ```
-- **Flash full automated test suite in terminal (WSL):**
+- **Flash full automated test suite in terminal (WSL — 19/19 passing):**
   ```bash
   cd /home/rebel/.gemini/antigravity/scratch/percaya
-  cargo test && npm run test:api
+  cargo test && node --experimental-strip-types --test packages/core/src/math.test.ts && npm run test:api && npm --workspace @percaya/mobile run test
   ```
 
 ---

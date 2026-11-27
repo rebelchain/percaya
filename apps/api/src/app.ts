@@ -60,7 +60,7 @@ export function createApp(customStore?: PercayaStore) {
           package_name: 'com.percaya.seeker',
           sha256_cert_fingerprints: [
             process.env.ANDROID_CERT_SHA256 ||
-              'FA:C6:17:45:DC:09:03:78:6F:B9:ED:E6:2A:96:2B:39:9F:73:48:F0:BB:6F:89:9B:83:32:66:75:91:03:3B:9C',
+              '8B:86:97:08:80:19:6D:E8:7D:90:50:FF:77:9A:0B:56:ED:9C:CE:A3:1C:68:0D:2F:CE:34:C3:2D:24:DF:25:CB',
           ],
         },
       },

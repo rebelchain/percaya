@@ -155,6 +155,7 @@ Live on **Solana Devnet** (`packages/core/src/devnet-deployment.json`, deployed 
 
 | Component | Address / Signature | Explorer |
 |---|---|---|
+| **Live Web Preview & Blinks API** | `https://percaya.duckdns.org` (`DATA=chain`, 24/7 Auto-Keeper + `/api/faucet`) | [Open Web](https://percaya.duckdns.org) · [Privacy](https://percaya.duckdns.org/privacy) · [Terms](https://percaya.duckdns.org/terms) |
 | **`percaya` Program** | `8ZMPKC79FfVvKsQXudDUJfGmmSMRd1HkY2QU7anrCcf6` | [Solana Explorer](https://explorer.solana.com/address/8ZMPKC79FfVvKsQXudDUJfGmmSMRd1HkY2QU7anrCcf6?cluster=devnet) |
 | **`percaya_amm` Program** | `AzU89s97v6XKT8oKkyV82p2k17z1eK2aFhGwrXTpquxz` | [Solana Explorer](https://explorer.solana.com/address/AzU89s97v6XKT8oKkyV82p2k17z1eK2aFhGwrXTpquxz?cluster=devnet) |
 | **`GlobalConfig` PDA** | `F559AB2MjAZModvfDw9oqqpy8gNEuS3AFYZbFTii8aa7` | [Solana Explorer](https://explorer.solana.com/address/F559AB2MjAZModvfDw9oqqpy8gNEuS3AFYZbFTii8aa7?cluster=devnet) |

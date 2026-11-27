@@ -1,0 +1,29 @@
+# systemd service for @percaya/api (DATA=chain + Auto-Keeper + /api/faucet)
+# Install:
+#   sudo cp deploy/percaya-api.service /etc/systemd/system/percaya-api.service
+#   sudo systemctl daemon-reload
+#   sudo systemctl enable --now percaya-api
+#   sudo journalctl -u percaya-api -f
+
+[Unit]
+Description=percaya Solana Devnet API, PDA Indexer, Auto-Keeper & Blinks
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=/opt/percaya
+Environment=NODE_ENV=production
+Environment=DATA=chain
+Environment=PORT=8787
+Environment=PUBLIC_API_URL=https://percaya.duckdns.org
+Environment=SOLANA_RPC_URL=https://api.devnet.solana.com
+# Optional: create /opt/percaya/.env with SIWS_SECRET=... and KEEPER_SECRET_KEY=[...]
+EnvironmentFile=-/opt/percaya/.env
+ExecStart=/usr/bin/env node --experimental-strip-types apps/api/src/index.ts --chain
+Restart=always
+RestartSec=5
+MemoryMax=300M
+
+[Install]
+WantedBy=multi-user.target

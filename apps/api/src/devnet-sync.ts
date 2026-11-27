@@ -49,6 +49,7 @@ interface DevnetTokenMeta {
 interface DevnetDeploymentFile {
   rpcUrl: string;
   admin: string;
+  configPda: string;
   programs: { percaya: string; percayaAmm: string };
   tokens: DevnetTokenMeta[];
 }

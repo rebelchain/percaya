@@ -16,6 +16,12 @@ import {
   verifySiwsLogin,
 } from './siws.ts';
 import { createPercayaStore, type PercayaStore } from './store.ts';
+import {
+  buildCheckpointTx,
+  buildClaimTx,
+  buildOpenCallTx,
+  buildSellTx,
+} from './tx-builders.ts';
 
 export function createApp(customStore?: PercayaStore) {
   const mode = process.env.DATA === 'chain' ? 'chain' : 'demo';
@@ -261,6 +267,67 @@ export function createApp(customStore?: PercayaStore) {
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Failed to build deposit transaction';
       return c.json({ message: msg }, 400, ACTIONS_CORS_HEADERS);
+    }
+  });
+
+  // Mobile MWA 2.0 Devnet Transaction Builders
+  app.post('/api/tx/open-call', async (c) => {
+    try {
+      const body = await c.req.json<{
+        caller: string;
+        tokenSymbol: string;
+        stakeSol: number;
+        windowMin: number;
+        tpPct: number;
+        slPct: number;
+        maxHoldMin: number;
+        sharePct: number;
+        thesis: string;
+      }>();
+      const res = await buildOpenCallTx({
+        rpcUrl,
+        callerBase58: body.caller,
+        tokenSymbol: body.tokenSymbol,
+        stakeSol: Number(body.stakeSol),
+        windowMin: Number(body.windowMin),
+        tpPct: Number(body.tpPct),
+        slPct: Number(body.slPct),
+        maxHoldMin: Number(body.maxHoldMin),
+        sharePct: Number(body.sharePct),
+        thesis: body.thesis || '',
+      });
+      return c.json(res);
+    } catch (err) {
+      return c.json(
+        { error: err instanceof Error ? err.message : 'Failed to build open-call tx' },
+        400,
+      );
+    }
+  });
+
+  app.post('/api/tx/:action/:id', async (c) => {
+    const action = c.req.param('action');
+    const id = Number(c.req.param('id'));
+    const call = store.getCall(id);
+    if (!call) return c.json({ error: 'Call not found' }, 404);
+    try {
+      const { account } = await c.req.json<{ account: string }>();
+      if (!account) return c.json({ error: 'Missing account pubkey' }, 400);
+      if (action === 'checkpoint') {
+        return c.json(await buildCheckpointTx(rpcUrl, account, call));
+      }
+      if (action === 'sell') {
+        return c.json(await buildSellTx(rpcUrl, account, call));
+      }
+      if (action === 'claim') {
+        return c.json(await buildClaimTx(rpcUrl, account, call));
+      }
+      return c.json({ error: `Unsupported action: ${action}` }, 400);
+    } catch (err) {
+      return c.json(
+        { error: err instanceof Error ? err.message : `Failed to build ${action} tx` },
+        400,
+      );
     }
   });
 

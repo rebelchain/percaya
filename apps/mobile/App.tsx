@@ -152,10 +152,10 @@ export default function App() {
   // 3-Step Compose Call Thread Wizard (persisted across Android MWA Activity switches)
   const [wizStep, setWizStep] = useState<1 | 2 | 3>(1);
   const [wizTokenIdx, setWizTokenIdx] = useState(0);
-  const [wizStakeSol, setWizStakeSol] = useState('0.10');
+  const [wizStakeSol, setWizStakeSol] = useState('0.012');
   const [wizWindowMin, setWizWindowMin] = useState(5);
-  const [wizTpPct, setWizTpPct] = useState(25);
-  const [wizSlPct, setWizSlPct] = useState(12);
+  const [wizTpPct, setWizTpPct] = useState(20);
+  const [wizSlPct, setWizSlPct] = useState(15);
   const [wizMaxHoldMin] = useState(15);
   const [wizSharePct] = useState(5);
   const [wizThesis, setWizThesis] = useState(
@@ -291,6 +291,93 @@ export default function App() {
     await Share.share({
       message: `percaya Call #${call.callId} on $${call.token.symbol} by ${displayIdentity(call.caller, call.callerSkr)} — One buy, one sale, fixed rules: https://percaya.app/c/${call.callId}`,
     });
+  };
+
+  const handleOpenCallOnChain = async () => {
+    void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    if (!session) {
+      await handleConnectMwa();
+      return;
+    }
+    setBusy(true);
+    try {
+      const res = await fetch(`${API_BASE}/api/tx/open-call`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          caller: session.pubkey,
+          tokenSymbol: selectedToken.symbol,
+          stakeSol: Number(wizStakeSol),
+          windowMin: wizWindowMin,
+          tpPct: wizTpPct,
+          slPct: wizSlPct,
+          maxHoldMin: wizMaxHoldMin,
+          sharePct: wizSharePct,
+          thesis: wizThesis,
+        }),
+      });
+      if (res.ok && !session.simulated) {
+        const data = (await res.json()) as {
+          transaction: string;
+          callId: number;
+          bondLamports: string;
+        };
+        const sig = await signAndSendViaSeedVault(data.transaction, session.mwaAuthToken);
+        void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        Alert.alert(
+          `Call #${data.callId} Published on Devnet`,
+          `Confirmed via MWA 2.0.\nTx: ${sig.slice(0, 18)}…`,
+        );
+        void fetchLiveFeed();
+      } else {
+        void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        Alert.alert(
+          'Call Thread Published (Preview)',
+          `Opened $${selectedToken.symbol} thread with ${wizStakeSol} SOL stake.`,
+        );
+      }
+      setWizStep(1);
+      setTab('home');
+    } catch (err) {
+      Alert.alert('Open Call Error', err instanceof Error ? err.message : 'Unable to send tx');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const handlePoolActionTx = async (
+    action: 'checkpoint' | 'sell' | 'claim',
+    call: CallDetail,
+  ) => {
+    void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    if (!session) {
+      await handleConnectMwa();
+      return;
+    }
+    setBusy(true);
+    try {
+      const res = await fetch(`${API_BASE}/api/tx/${action}/${call.callId}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ account: session.pubkey }),
+      });
+      if (res.ok && !session.simulated) {
+        const { transaction } = (await res.json()) as { transaction: string };
+        const sig = await signAndSendViaSeedVault(transaction, session.mwaAuthToken);
+        void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        Alert.alert(`${action.toUpperCase()} Confirmed on Devnet`, `Tx: ${sig.slice(0, 18)}…`);
+        void fetchLiveFeed();
+      } else {
+        Alert.alert(
+          `${action.toUpperCase()} Preview`,
+          `Connect Solflare/Phantom Devnet via MWA 2.0 to execute live ${action}() on Call #${call.callId}.`,
+        );
+      }
+    } catch (err) {
+      Alert.alert('Transaction Error', err instanceof Error ? err.message : 'Unable to send tx');
+    } finally {
+      setBusy(false);
+    }
   };
 
   const selectedToken = DEMO_TOKENS[wizTokenIdx];
@@ -804,7 +891,7 @@ export default function App() {
               <View style={{ marginTop: 14, gap: 12 }}>
                 <View style={styles.embeddedPoolCard}>
                   <Text style={styles.callerName}>
-                    ${selectedToken.symbol} · {wizStakeSol} SOL locked
+                    ${selectedToken.symbol} · {wizStakeSol} SOL locked stake
                   </Text>
                   <Text style={styles.thesisSnippet}>{wizThesis}</Text>
                   <Text style={styles.lockedNums}>
@@ -812,21 +899,28 @@ export default function App() {
                     {wizMaxHoldMin}m · Fee {wizSharePct}%
                   </Text>
                 </View>
+
+                {/* Transparent Bond vs Stake Breakdown (Best-practice PM UX) */}
+                <View style={styles.embeddedPoolCard}>
+                  <Text style={styles.lockedTitle}>Transaction breakdown (1-click MWA approve)</Text>
+                  <Text style={styles.lockedNums}>
+                    • Caller Bond (1× reusable deposit, slashable): 0.0500 SOL (auto-skipped if
+                    already bonded)
+                  </Text>
+                  <Text style={styles.lockedNums}>
+                    • Pool Stake (enters ${selectedToken.symbol} at same price as followers):{' '}
+                    {wizStakeSol} SOL
+                  </Text>
+                </View>
+
                 <View style={styles.rowBetween}>
                   <Pressable style={styles.secondaryBtn} onPress={() => setWizStep(2)}>
                     <Text style={styles.secondaryBtnText}>Edit</Text>
                   </Pressable>
                   <Pressable
                     style={styles.accentBtn}
-                    onPress={() => {
-                      void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-                      Alert.alert(
-                        'Call Thread Published',
-                        `Published $${selectedToken.symbol} thread with ${wizStakeSol} SOL locked via Seed Vault.`,
-                      );
-                      setWizStep(1);
-                      setTab('home');
-                    }}
+                    disabled={busy}
+                    onPress={handleOpenCallOnChain}
                   >
                     <Text style={styles.primaryBtnText}>Post & Lock SOL</Text>
                   </Pressable>
@@ -1025,20 +1119,15 @@ export default function App() {
                 <View style={styles.rowBetween}>
                   <Pressable
                     style={[styles.secondaryBtn, { flex: 1, marginRight: 8 }]}
-                    onPress={() =>
-                      Alert.alert('Checkpoint Recorded', 'Recorded live AMM sell quote on chain.')
-                    }
+                    disabled={busy}
+                    onPress={() => handlePoolActionTx('checkpoint', activeDetail)}
                   >
                     <Text style={styles.secondaryBtnText}>Checkpoint</Text>
                   </Pressable>
                   <Pressable
                     style={[styles.accentBtn, { flex: 1 }]}
-                    onPress={() =>
-                      Alert.alert(
-                        'Keeper Sale Check',
-                        'Requires 2 checkpoints ≥45s apart meeting TP/SL or Max Hold.',
-                      )
-                    }
+                    disabled={busy}
+                    onPress={() => handlePoolActionTx('sell', activeDetail)}
                   >
                     <Text style={styles.primaryBtnText}>Sell & Earn 0.1%</Text>
                   </Pressable>
@@ -1046,9 +1135,8 @@ export default function App() {
               ) : (
                 <Pressable
                   style={styles.primaryBtn}
-                  onPress={() =>
-                    Alert.alert('Claimed via Seed Vault', 'Pro-rata SOL transferred from SolVault.')
-                  }
+                  disabled={busy}
+                  onPress={() => handlePoolActionTx('claim', activeDetail)}
                 >
                   <Text style={styles.primaryBtnText}>Claim Pro-Rata SOL</Text>
                 </Pressable>

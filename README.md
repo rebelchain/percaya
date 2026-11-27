@@ -2,39 +2,41 @@
 
 **One buy. One sale. The same price for everyone.**
 
-`percaya` (Indonesian for *trust*) turns a crypto call into a shared on-chain position built natively for **Solana Mobile Seeker**. A caller opens a pool on one SPL token, fixes every rule up front and puts their own SOL in first. Anyone can join from the Seeker app—or in one tap from a Telegram/X Blink—while the window is open. The pool then buys once for everyone, sells once for everyone when a rule is met, and every participant, the caller included, ends with the same percentage.
+`percaya` (Indonesian for *trust*) is a **Skin-in-the-Game Threads** mobile dApp built natively for **Solana Mobile Seeker**. Every root post in the feed is an immutable on-chain pooled call: a caller picks one SPL token, fixes every exit rule up front, and locks their own SOL first. Followers join from the Android app—or in one tap from a Telegram/X Solana Blink—while the window is open, and every reply inside the thread automatically carries an on-chain position badge (`In Pool · 0.50 SOL` vs `Spectator`).
 
-The net result goes on the caller's permanent on-chain record, bound to their hardware-attested **Seeker Genesis Token** and **`.skr` identity**, and that record decides how much they may raise next.
+The pool buys once for everyone, sells once for everyone when two spaced on-chain price checkpoints meet a rule, and every participant—the caller included—ends with the exact same percentage return. The net result stays permanently on the caller's on-chain record, bound at Tiers 1–3 to a 1-per-device **Token-2022 `NonTransferable` Seeker Genesis NFT**.
 
-[![Anchor](https://img.shields.io/badge/Anchor-0.31-663399)](programs/percaya)
-[![Solana Devnet](https://img.shields.io/badge/Solana-Devnet-14F195)](#deployment)
-[![Solana Mobile](https://img.shields.io/badge/Solana_Mobile-MWA_2.0_%C2%B7_Seed_Vault-000000)](#seeker-integration)
-[![Expo](https://img.shields.io/badge/Expo-React_Native_Android-000020)](apps/mobile)
-[![Bun](https://img.shields.io/badge/Bun-Hono-000000)](apps/api)
+[![Anchor](https://img.shields.io/badge/Anchor-1.2.2_%C2%B7_anchor--lang_1.2.0-663399)](programs/percaya)
+[![LiteSVM](https://img.shields.io/badge/LiteSVM-0.15.0_%C2%B7_4%2F4_pass-0A8A5F)](programs/percaya/tests/test_percaya.rs)
+[![Solana Devnet](https://img.shields.io/badge/Solana-Devnet_%C2%B7_CLI_4.1.2-14F195)](#deployment)
+[![Solana Mobile](https://img.shields.io/badge/Solana_Mobile-MWA_2.0_%C2%B7_Seed_Vault-000000)](apps/mobile/src/mwa.ts)
+[![Expo](https://img.shields.io/badge/Expo_SDK_52-React_Native_0.76.7_(Hermes)-000020)](apps/mobile)
+[![Node 24](https://img.shields.io/badge/Node.js-24_%C2%B7_Hono_4.7-339933)](apps/api)
 [![Licence](https://img.shields.io/badge/licence-MIT-blue)](LICENSE)
 
 ---
 
 ## Contents
 
-[The problem](#the-problem) · [Why Solana Mobile & Seeker](#why-solana-mobile--seeker) · [How it works](#how-it-works) · [Worked example](#worked-example) · [Architecture](#architecture) · [Guarantees](#guarantees) · [Tech stack](#tech-stack) · [Repository](#repository) · [Known limits](#known-limits) · [Documentation](#documentation)
+[The problem](#the-problem) · [Skin-in-the-Game Threads & Seeker](#skin-in-the-game-threads--seeker) · [How it works](#how-it-works) · [Worked example](#worked-example) · [Architecture](#architecture) · [Guarantees](#guarantees) · [Deployment](#deployment) · [Getting started](#getting-started) · [Testing](#testing) · [Tech stack](#tech-stack) · [Repository](#repository) · [Known limits](#known-limits) · [Origin & credits](#origin--credits) · [Documentation](#documentation)
 
 ---
 
 ## The problem
 
-Call groups on Telegram and X move millions in Solana memecoins with zero consequence for the caller. A caller can buy early, post the ticker, sell into their followers' buying, delete the message when it goes wrong and spin up a fresh burner wallet with a clean history. Followers carry the risk and never see the caller's actual fills.
+Call groups on Telegram and X move millions in Solana tokens with zero consequence for the caller. A caller can buy early, post the ticker, sell into their followers' buying, delete the message when it goes wrong, and spin up a fresh burner wallet with a clean history. Followers carry the downside and never see the caller's actual fills.
 
-`percaya` removes the head start instead of trying to police chat rooms. The caller's SOL rides in the same pool, at the same entry and exit price, under rules nobody can change after open, and every result stays on an on-chain record anchored to hardware identity.
+`percaya` removes the head start mechanically instead of trying to police chat rooms. The caller's SOL rides in the same pool, at the same entry and exit price, under rules nobody can change after open, and every outcome—losses included—stays on an on-chain record anchored to hardware identity.
 
 ---
 
-## Why Solana Mobile & Seeker
+## Skin-in-the-Game Threads & Seeker
 
- crypto calls happen on phones, inside mobile chat groups, with windows measured in minutes. Adapting pooled accountability to **Solana Mobile Seeker** closes the two gaps that desktop EVM builds leave open:
+Crypto calls happen on phones, inside mobile chat feeds, with windows measured in minutes. Adapting pooled accountability to **Solana Mobile Seeker** solves three problems at once:
 
-1. **Closing the burner-wallet reset (`Seeker Genesis Token` + `.skr`).** On a standard chain, a ruined caller spins up a fresh keypair for nothing. In `percaya`, Tiers 1–3 (`5×` to `20×` bond cap) require binding a **Seeker Genesis Token** (Token-2022 1-per-device hardware NFT) into an on-chain `GenesisRegistry` PDA. One physical Seeker device maps to one permanent track record. Rotating sub-accounts inside Seed Vault cannot spawn a clean slate, and a slash taints that Genesis Token permanently. Unverified wallets remain capped at Tier 0 (`2×` bond, `5%` max fee) and are labelled openly.
-2. **From chat link to biometric Seed Vault fill in one tap.** When a caller opens a pool, `percaya` publishes a **Solana Action (Blink)** and an **Android App Link**. Followers on Seeker tap the link in Telegram or X, inspect the locked rules, and authorize the deposit with a single **Seed Vault** fingerprint prompt via **Mobile Wallet Adapter (MWA 2.0)** + Sign-In With Solana (SIWS).
+1. **No free shilling (`Call-as-a-Thread`).** The mobile app follows the familiar 5-tab **Threads** pattern (`Home`, `Callers`, `+ Post`, `Activity`, `Profile`) with `For you (Newest)` and `Following` feeds—except **you cannot publish a root post without locking SOL in an on-chain pool**. Inside any thread, replies signed via SIWS automatically display whether the commenter actually put SOL in (`In Pool · 0.50 SOL`) or is watching from the sidelines (`Spectator`).
+2. **Closing burner-wallet resets (`Seeker Genesis Token` + `GenesisRegistry` PDA).** On standard chains, a ruined caller spins up a fresh keypair for free. In `percaya`, Tiers 1–3 (`5×` to `20×` bond cap) require binding a 1-per-device **Token-2022 `NonTransferable` Seeker Genesis NFT** into a one-time `init` `GenesisRegistry` PDA (`[b"genesis", genesis_mint]`). One physical device maps to one permanent track record; a slash taints that Genesis Token permanently. Unverified wallets remain capped at Tier 0 (`2×` bond, `5%` max fee) and are labelled openly.
+3. **One-tap chat-to-Seed-Vault fills (`Solana Blinks` + `MWA 2.0`).** Every call exposes a Solana Action endpoint (`/actions.json` + `/api/actions/call/:id`) with dynamic calm SVG share cards and Android App Links (`/.well-known/assetlinks.json`), letting followers inspect locked rules and sign deposits directly via **Mobile Wallet Adapter 2.0** and **Seed Vault**.
 
 ---
 
@@ -43,7 +45,7 @@ Call groups on Telegram and X move millions in Solana memecoins with zero conseq
 ```mermaid
 stateDiagram-v2
     direction LR
-    [*] --> Open: caller opens with SOL stake and fixed rules
+    [*] --> Open: caller opens thread with SOL stake and fixed rules
     Open --> Open: anyone deposits or withdraws SOL 1:1
     Open --> Holding: caller buys SPL token for the whole pool
     Open --> Refunded: under minimum, or no buy by deadline
@@ -54,17 +56,15 @@ stateDiagram-v2
     Split --> [*]: everyone claims SPL tokens pro rata
 ```
 
-1. **Bond & Hardware Link.** A caller posts a SOL bond into their `CallerRecord` PDA before their first pool, and optionally links their **Seeker Genesis Token** + `.skr` handle. The bond stays locked while any call is open or holding, and the admin can slash it with a public on-chain reason.
-2. **Open.** The caller selects an allowed SPL token, sets the join window, take-profit, stop-loss, max hold and profit share, and deposits their SOL stake. Every rule, timing parameter and AMM pool address is copied into the `CallPool` PDA at this transaction and never changes.
-3. **Join.** While the window is open, anyone deposits SOL or withdraws it 1:1 via the Seeker app or a Solana Blink. Deposits revert if they push the pool over its cap, push buy price impact past `2%`, or dilute the caller below `5%` of the pool. The caller cannot withdraw.
-4. **Buy.** After the window closes, the caller executes one swap for the entire pool. The Anchor program verifies minimum size, cap, caller share (`>= 5%`) and on-chain AMM price impact (`<= 2%`), executes the CPI swap, and records the exact SPL token delta received in `call_token_vault`.
-5. **Checkpoints.** Anyone can record an on-chain checkpoint once per `checkpoint_gap`, storing what selling the entire token vault into the AMM would return right now.
-6. **Sell.** Anyone can trigger the sale when the last two checkpoints (at least one `checkpoint_gap` apart, with the latest still fresh) both meet take-profit, both meet stop-loss, or agree within `2%` tolerance at `max_hold`. The program computes `min_out` directly from the checkpoints and pays `0.1%` of gross proceeds to the keeper who sent the transaction.
-7. **Claim.** Each participant claims once: SOL after a sale (plus profit-only fee for the caller) or refund, or SPL tokens after a split. The final claimer sweeps any integer-division lamport/token remainder so zero dust is stranded.
+1. **Bond & Hardware Link.** A caller registers (`register_caller`), posts a SOL bond (`post_bond`), and optionally verifies their Token-2022 `NonTransferable` Seeker Genesis NFT (`verify_seeker_genesis`). The bond stays locked while any call is open or holding and can be slashed with a public on-chain reason.
+2. **Open.** The caller selects an allowed SPL token, fixes the join window, take-profit, stop-loss, max hold, profit share and thesis (`<= 280` bytes), and locks their SOL stake (`open_call`). Every rule, timing bound and AMM pool pubkey is snapshotted into `CallPool` and never changes.
+3. **Join.** While the window is open, anyone deposits SOL (`init_position` + `deposit`) or withdraws it 1:1 (`withdraw`). Deposits revert if they exceed the bond tier cap, push buy price impact past `2%`, or dilute the caller below `5%`. The caller cannot withdraw.
+4. **Buy.** After the window closes, the caller runs one CPI swap (`buy`) for the entire pool. The program enforces minimum size, cap, caller share (`>= 5%`) and closed-form `u128` buy price impact (`<= 2%`), and records the actual token balance delta received in `call_token_vault`.
+5. **Checkpoints.** Anyone can call `checkpoint` once per `checkpoint_gap`, storing what selling the whole token vault into the AMM would return right now.
+6. **Sell.** Anyone can call `sell` when two checkpoints (at least one `checkpoint_gap` apart, with the latest still fresh) both meet take-profit, both meet stop-loss, or agree within `2%` at `max_hold`. The program computes `min_out` on chain and pays `0.1%` of gross proceeds to the keeper signer.
+7. **Claim.** Each participant claims once (`claim`). The final claimant (`claims_left == 1`) sweeps `pot - claimed_amount` so zero lamports or tokens are ever stranded.
 
 ### Reputation tiers
-
-The net percentage returned to participants (`(payout - total_in) / total_in`) updates the caller's on-chain record after every settled pool.
 
 | Tier | Requirement | Seeker Genesis | Pool cap | Max profit share |
 |---|---|---|---|---|
@@ -77,7 +77,7 @@ The net percentage returned to participants (`(payout - total_in) / total_in`) u
 
 ## Worked example
 
-`100 SOL` pooled (caller `10 SOL`, A `30 SOL`, B `40 SOL`, C `20 SOL`), `10%` profit share, sold for `130 SOL` gross (`1 SOL = 1,000,000,000 lamports`). Verified to the single lamport in `test_worked_example_profit`:
+`100 SOL` pooled (caller `10 SOL`, A `30 SOL`, B `40 SOL`, C `20 SOL`), `10%` profit share, sold for `130 SOL` gross (`1 SOL = 1,000,000,000 lamports`). Verified to the single lamport in `packages/core/src/math.test.ts` and `programs/percaya/tests/test_percaya.rs`:
 
 ```text
 keeper  = 130.0000 × 0.1%              =   0.1300 SOL    (130,000,000 lamports)
@@ -91,7 +91,7 @@ A 38.0649 SOL · B 50.7532 SOL · C 25.3766 SOL
 every participant: +26.88% · on-chain record: +26.88% (+2688 bps)
 ```
 
-Sold for `70 SOL` gross instead (`test_worked_example_loss`), keeper receives `0.0700 SOL`, `net = 69.9300 SOL`, `profit = 0`, `fee = 0`. Everyone—the caller included—ends at **`−30.07%`** (`-3007 bps`), and the caller's record logs a loss of `−30.07%`.
+Sold for `70 SOL` gross instead, keeper receives `0.0700 SOL`, `net = 69.9300 SOL`, `profit = 0`, `fee = 0`. Everyone—the caller included—ends at **`−30.07%`** (`-3007 bps`), and the caller's record logs a loss of `−30.07%`.
 
 ---
 
@@ -100,35 +100,34 @@ Sold for `70 SOL` gross instead (`test_worked_example_loss`), keeper receives `0
 ```mermaid
 flowchart LR
     subgraph Mobile["Android / Seeker"]
-        M["percaya Android APK<br/>Expo RN · MWA 2.0 · Seed Vault"]
+        M["percaya Android App<br/>Expo SDK 52 · RN 0.76.7 · MWA 2.0"]
     end
     subgraph Web["Chat & Web Surface"]
-        W["Web Preview + Blinks<br/>React · App Links · ACTIONS.json"]
+        W["Web Preview + Blinks<br/>Vite · React 18 · ACTIONS.json"]
     end
-    subgraph Backend["API Host (Bun + Hono)"]
-        A["REST + Actions API<br/>SIWS Auth · OpenAPI"]
-        I["Anchor Event Indexer"]
-        K["Auto-Keeper<br/>Simulate + Send"]
-        L["Live Alerts<br/>SSE · Telegram Bot"]
-        D[("Postgres / PGlite")]
+    subgraph Backend["API & Keeper (Node 24 + Hono 4.7)"]
+        A["REST + Actions + Replies<br/>SIWS Ed25519 · SVG Cards"]
+        I["Live PDA Indexer<br/>devnet-sync.ts"]
+        K["Simulating Auto-Keeper<br/>checkpoint · sell · refund · split"]
+        L["Live Alerts<br/>SSE · Optional Telegram"]
     end
     subgraph Solana["Solana Devnet"]
-        P["percaya Program<br/>Anchor PDAs + Genesis Gate"]
+        P["percaya Program<br/>Anchor 1.2.2 · PDAs"]
         S["percaya_amm Program<br/>Constant-Product Pools"]
-        G["Token-2022 Genesis<br/>& .skr Resolution"]
+        G["Token-2022 Genesis<br/>NonTransferable NFT"]
     end
 
-    M -- "reads + SSE" --> A
+    M -- "REST + replies + SSE" --> A
     M -- "MWA signAndSend" --> P
-    W -- "Blink tx / preview" --> A
-    A --> D
-    P -- "logs / accounts" --> I
-    I --> D
-    D -- "NOTIFY" --> L
+    W -- "reads + Blink tx" --> A
+    I --> A
+    A --> L
     L --> M
-    K -- "checkpoint · sell · refund · split" --> P
-    P -- "CPI swap + vault read" --> S
-    P -- "verify hardware NFT" --> G
+    P -- "getProgramAccounts" --> I
+    S -- "vault reserves" --> I
+    K -- "simulate + send" --> P
+    P -- "CPI swap + math" --> S
+    P -- "TLV extension check" --> G
 ```
 
 ---
@@ -138,26 +137,101 @@ flowchart LR
 | Guarantee | How the Anchor program enforces it |
 |---|---|
 | Rules are final | Every rule, timing bound and AMM pool pubkey is copied into `CallPool` at `open_call`. No instruction—admin included—mutates an active call's rules. |
+| No `init_if_needed` footguns | Explicit initialization paths (`register_caller`, `register_token`, `init_position`) composed atomically in one transaction. |
 | Caller is in first and stays in | `open_call` transfers the caller's SOL stake into `SolVault`; `withdraw` rejects `caller`; `deposit` and `buy` enforce `caller_stake >= 5%` of `total_in`. |
 | One entry, one exit | `buy` swaps the entire `SolVault` once; `sell` swaps the entire `call_token_vault` once. No individual exit path exists while `Holding`. |
-| No sale on a single-slot push | `sell` requires two on-chain checkpoints at least `checkpoint_gap` apart, with the latest at most one `checkpoint_gap` old, and computes `min_out` on-chain. |
-| Real balance accounting | `buy` and `sell` measure actual `TokenAccount` and `SolVault` lamport deltas around the CPI swap; stray lamport transfers never distort share math. |
+| No sale on a single-slot push | `sell` requires two on-chain checkpoints at least `checkpoint_gap` apart, with the latest at most one `checkpoint_gap` old, and computes `min_out` on chain. |
+| Stray-lamport & rent-floor safety | `SolVault`, `BondVault`, and `AmmSolVault` are 0-byte `SystemAccount` PDAs seeded with `Rent::minimum_balance(0)`. Accounting tracks state fields and swap deltas only; unsolicited SOL donations cannot break claims. |
 | Profit-only fee | `fee = max(net - total_in, 0) * share_bps / 10_000`. Zero fee on break-even, loss, refund or split. |
-| Hardware-bound higher tiers | Tiers 1–3 require a verified Token-2022 Genesis Token bound in `GenesisRegistry` PDA; one physical device cannot reset a negative or slashed history. |
-| Zero stranded dust | Refunds (`1:1`), token splits (`0` fee), and the final claimant (`claims_left == 1`) sweeping `pot - claimed`. |
+| Hardware-bound higher tiers | Tiers 1–3 require a verified Token-2022 `NonTransferable` Genesis NFT bound in `GenesisRegistry` (`init` once per mint). |
+| Zero stranded dust | Refunds (`1:1`), token splits (`0` fee), and the final claimant (`claims_left == 1`) sweeping `pot - claimed_amount`. |
 | Admin has no path to pool funds | Admin instructions touch `GlobalConfig`, `AllowedToken` PDAs, and `CallerRecord` bonds (on public slash) only—never `SolVault` or `call_token_vault`. |
+
+---
+
+## Deployment
+
+Live on **Solana Devnet** (`packages/core/src/devnet-deployment.json`, deployed and seeded 27 November 2026):
+
+| Component | Address / Signature | Explorer |
+|---|---|---|
+| **`percaya` Program** | `8ZMPKC79FfVvKsQXudDUJfGmmSMRd1HkY2QU7anrCcf6` | [Solana Explorer](https://explorer.solana.com/address/8ZMPKC79FfVvKsQXudDUJfGmmSMRd1HkY2QU7anrCcf6?cluster=devnet) |
+| **`percaya_amm` Program** | `AzU89s97v6XKT8oKkyV82p2k17z1eK2aFhGwrXTpquxz` | [Solana Explorer](https://explorer.solana.com/address/AzU89s97v6XKT8oKkyV82p2k17z1eK2aFhGwrXTpquxz?cluster=devnet) |
+| **`GlobalConfig` PDA** | `F559AB2MjAZModvfDw9oqqpy8gNEuS3AFYZbFTii8aa7` | [Solana Explorer](https://explorer.solana.com/address/F559AB2MjAZModvfDw9oqqpy8gNEuS3AFYZbFTii8aa7?cluster=devnet) |
+| **`$tBONK` Mint / AMM Pool** | `5Y5uHKf…gukR` / `GgTd1UV5SPntSPfsJVEsWafvMk7EWJyQ6i5YwAsNzuiH` | [Pool](https://explorer.solana.com/address/GgTd1UV5SPntSPfsJVEsWafvMk7EWJyQ6i5YwAsNzuiH?cluster=devnet) |
+| **`$tWIF` Mint / AMM Pool** | `AVdTeM9…JLDn` / `DTE5Ujr19xh982gGN2h67tdMrYGDpxtsTv1eJaSknxmw` | [Pool](https://explorer.solana.com/address/DTE5Ujr19xh982gGN2h67tdMrYGDpxtsTv1eJaSknxmw?cluster=devnet) |
+| **`$tSKR` Mint / AMM Pool** | `F1vMDdV…Yyip` / `4XmQwqt8su3HrsSCmtDXx4iXzj3zcMZCkEmdiwUCE4i6` | [Pool](https://explorer.solana.com/address/4XmQwqt8su3HrsSCmtDXx4iXzj3zcMZCkEmdiwUCE4i6?cluster=devnet) |
+| **Token-2022 Seeker Genesis NFT** | `GsRTNhTYJg4RG7NgJ8enT1wGAvEfghhchjy25f8WmBLL` | [Mint](https://explorer.solana.com/address/GsRTNhTYJg4RG7NgJ8enT1wGAvEfghhchjy25f8WmBLL?cluster=devnet) |
+| **Live Devnet Call #1 (`open_call`)** | `3tJumYzk…919bjNBa1` | [Transaction](https://explorer.solana.com/tx/3tJumYzkJAXEG344kjWZkDtjngnNzVMdRYgB9SWDjngYT8UFVRMXKEHsRNMfkE3codqx93cTxg15Ebi919bjNBa1?cluster=devnet) |
+| **Live Devnet AMM Swap (`move-price`)** | `2wwPbx8G…V3n7GmGQ` | [Transaction](https://explorer.solana.com/tx/2wwPbx8GJa9Dsh2s5Y9w75i6py5hmqK8KoJUMUdCs9SaT6FCVUGwo5bz2XXXfc8WCoRGu6yx2Zs4F2oQV3n7GmGQ?cluster=devnet) |
+
+**Devnet demo parameters:** `0.05 SOL` min bond, `0.01 SOL` min pool, `60s–600s` windows, `120s–1800s` max hold, `45s` checkpoint gap, `2%` max buy price impact, `0.1%` keeper reward.
+
+---
+
+## Getting started
+
+**1. API & Web Preview (Demo fixtures, no RPC required):**
+
+```bash
+npm install
+npm run dev:api          # http://localhost:8787 (DATA=demo)
+npm run dev:web          # http://localhost:5173
+```
+
+**2. Live Solana Devnet mode (`DATA=chain` + Auto-Keeper):**
+
+```bash
+npm run dev:api:chain    # Polls live Devnet PDAs every 15s & runs simulating Keeper
+```
+
+**3. Trigger a live Devnet price move (for TP/SL demos):**
+
+```bash
+npm run move:price -- --token tBONK --sol 0.15
+```
+
+**4. Android Native App (`apps/mobile`, requires Android Studio / SDK):**
+
+```bash
+cd apps/mobile
+npm install
+npx expo prebuild --platform android
+npx expo run:android     # Installs debug dev-client APK onto connected Emulator / Android device
+# Standalone signed release APK:
+cd android && ./gradlew assembleRelease
+```
+
+---
+
+## Testing
+
+```bash
+# 1. Solana Anchor programs — 4/4 LiteSVM end-to-end simulation tests (0.52s)
+cargo test
+
+# 2. Shared fixed-point math & settlement invariants — 6/6 tests
+node --experimental-strip-types --test packages/core/src/math.test.ts
+
+# 3. API, SIWS Ed25519, Thread Replies & Solana Blinks — 3/3 tests
+npm run test:api
+
+# 4. Full TypeScript check & Web production bundle
+npm run typecheck
+npm --workspace @percaya/web run build
+```
 
 ---
 
 ## Tech stack
 
-| Layer | Tools |
+| Layer | Actual stack implemented |
 |---|---|
-| Solana Programs | Rust, Anchor `0.31`, SPL Token & Token-2022 (`spl-token-2022`), Constant-Product AMM CPI |
-| Mobile (Primary) | Expo SDK 54 (React Native Android Dev Build), NativeWind, `@wallet-ui/react-native-kit` (MWA 2.0), `@solana-mobile/skr-genesis-token`, `@solana-mobile/skr-domain` |
-| Web Preview & Blinks | Vite, React 18, Tailwind, Solana Actions (`@solana/actions`), Android App Links |
-| Backend API & Keeper | Bun, Hono, Drizzle ORM, PostgreSQL / PGlite, `@solana/kit` / `@coral-xyz/anchor`, SIWS Ed25519 verification |
-| Testing | LiteSVM / Anchor Bankrun (unit, fuzz, invariants), `bun test` (API, indexer, keeper), Maestro / Playwright |
+| Solana Programs | Rust (`1.89.0` / SBF `v1.57`), Anchor CLI `1.2.2` (`anchor-lang 1.2.0`), Solana CLI `4.1.2`, raw SPL Token & Token-2022 TLV compat |
+| Smart Contract Testing | `LiteSVM 0.15.0` (`solana-message 4`, `solana-transaction 4`, `solana-keypair 3`) |
+| Mobile App (Primary) | Expo SDK `52`, React Native `0.76.7` (Hermes), `@solana-mobile/mobile-wallet-adapter-protocol-web3js` `2.1.3` (MWA 2.0), `expo-haptics`, `dapp-store/config.yaml` |
+| Backend API & Keeper | Node.js `24` (`--experimental-strip-types`), Hono `4.7.4`, `@solana/web3.js 1.98`, live PDA Indexer + simulating Auto-Keeper (`devnet-sync.ts`), SIWS Ed25519 (`node:crypto`), Solana Actions (`ACTIONS.json`), dynamic SVG cards |
+| Web Preview | Vite `6`, React `18`, Tailwind CSS `3.4`, `lucide-react` |
 
 ---
 
@@ -165,46 +239,51 @@ flowchart LR
 
 ```text
 programs/
-  percaya/                  core pooled-call, reputation & Genesis registry Anchor program
-  percaya_amm/              deterministic constant-product AMM & devnet liquidity seeder
+  percaya/                  core pooled-call, reputation & Token-2022 Genesis Anchor program
+  percaya_amm/              constant-product AMM, u128 math & SPL/Token-2022 compat module
 packages/
-  core/                     shared TypeScript types, IDL client, PDA derivations, demo dataset
+  core/                     shared types, u128-mirror BigInt math, PDA seeds, synced IDLs & devnet-deployment.json
 apps/
-  mobile/                   Expo React Native Android APK (MWA 2.0, Seed Vault, .skr, calm UI)
-  web/                      lightweight web preview card, live docs & App Linklanding
-  api/                      Hono REST + Solana Actions/Blinks, indexer, keeper, SSE, Telegram
+  mobile/                   Expo RN Android app (5-tab Threads UI, MWA 2.0, Seed Vault, dApp Store config)
+  api/                      Hono REST, SIWS, Thread Replies, Solana Blinks, SVG cards, live Devnet Indexer & Keeper
+  web/                      calm web preview (/c/:id), live /docs & Android App Links landing
 scripts/
-  seed-devnet.ts            deploys tBONK, tWIF, tSKR, Token-2022 mock Genesis & seeds pools
-  move-price.ts             deterministic devnet swap script to demo live TP & SL triggers
+  seed-devnet.ts            batched idempotent Devnet seeder (GlobalConfig, 3 AMM pools, Token-2022 Genesis)
+  open-demo-call.ts         opens live Devnet Call #1 & verifies DATA=chain PDA decoding
+  move-price.ts             swaps SOL into Devnet AMM pools to demonstrate live TP/SL triggers
 docs/
-  prd.md                    product requirements, hackathon track fit, parameters & limits
-  contracts.md              Anchor PDA layouts, instruction specs, math & security invariants
-  architecture.md           mobile, SIWS, Blinks, indexer, keeper & dual-mode store design
-  design.md                 calm light-theme mobile design system & Android UX specification
-  writeup.md                Dev3pack submission write-up & 3-minute live demo script
+  prd.md                    product requirements, Dev3pack rubric mapping & honest limits
+  contracts.md              Anchor PDA layouts, instruction specs, math & invariants
+  architecture.md           built vs roadmap system architecture (mobile, Blinks, indexer, keeper)
+  design.md                 calm light-theme Skin-in-the-Game Threads design specification
+  security.md               Solana security self-review & accepted hackathon limits
+  writeup.md                Dev3pack Global Hackathon submission write-up & 3-min demo script
+  demo-runbook.md           1-page Sunday live demo operator checklist (WSL + PowerShell + Emulator)
 ```
 
 ---
 
 ## Known limits
 
-- **Second wallets & second phones.** A caller can still buy from an unrelated wallet before the pool buys. Their own SOL stake rides the pool's entry, their bond is slashable, early buyers before the pool's buy are surfaced per call, and Tiers 1–3 are locked to a 1-per-phone Seeker Genesis Token—making resets cost a physical device rather than a free keypair. We claim *costly and visible*, never *impossible*.
-- **Spaced spot quotes vs TWAP.** The AMM exposes live vault reserves rather than a manipulation-resistant TWAP. Requiring two checkpoints separated by `checkpoint_gap` defeats single-slot flash loans and sandwich pushes; a price genuinely held across an entire gap counts.
-- **Devnet demo liquidity & Genesis simulation.** Because Solana Devnet has no organic memecoin liquidity or Mainnet Seeker Genesis NFTs, our Devnet deployment seeds three constant-product pools (`tBONK`, `tWIF`, `tSKR`) and a configurable Token-2022 `NonTransferable` Genesis mint so every flow—including Seed Vault Simulator signing, TP/SL auto-settlement, and Genesis gating—runs live on chain.
-- **Legal.** `percaya` is an accountability prototype built for a 3-day hackathon and has undergone no legal or external security audit.
+- **Second wallets & second phones.** A caller can still buy from an exchange-funded wallet before the pool buys. Their own SOL rides the pool's entry, their bond is slashable, and Tiers 1–3 require a 1-per-phone Token-2022 Seeker Genesis NFT—making resets cost a physical device rather than a free keypair. We claim *costly and visible*, never *impossible*.
+- **Spaced spot quotes vs TWAP.** The AMM exposes live vault reserves rather than a TWAP oracle. Requiring two checkpoints separated by `checkpoint_gap` defeats single-slot flash pushes; a price held across an entire gap counts.
+- **Devnet demo liquidity & Genesis simulation.** Because Solana Devnet has no organic memecoin liquidity or Mainnet Seeker Genesis NFTs, Devnet uses three seeded constant-product pools (`tBONK`, `tWIF`, `tSKR`) and an admin-issued Token-2022 `NonTransferable` Genesis mint so every flow runs live on chain.
+- **Legal.** `percaya` is an un-audited hackathon accountability prototype on Solana Devnet and has undergone no legal review.
+
+---
+
+## Origin & credits
+
+`percaya` adapts the pooled-call accountability mechanism and calm editorial design language originally created in [`youvandra/trustpool`](https://github.com/youvandra/trustpool) (MIT License, Monad testnet) and re-architects it from scratch for **Solana (Anchor / Rust)**, **Solana Mobile Seeker (MWA 2.0 + Token-2022 Genesis)**, **Solana Blinks**, and a **Skin-in-the-Game Threads** mobile experience. Built by Azhar with architecture and security review by Youvandra.
 
 ---
 
 ## Documentation
 
-- [`docs/prd.md`](docs/prd.md) — Product requirements, actors, lifecycle, Seeker mechanics and honest limits
-- [`docs/contracts.md`](docs/contracts.md) — Anchor program accounts, PDA seeds, CPI swaps and invariants
-- [`docs/architecture.md`](docs/architecture.md) — End-to-end mobile, Blinks, indexer and keeper architecture
-- [`docs/design.md`](docs/design.md) — Android mobile-first adaptation of the *calm* design language
-- [`docs/writeup.md`](docs/writeup.md) — Dev3pack Global Hackathon write-up and live demo choreography
+- [`docs/prd.md`](docs/prd.md) · [`docs/contracts.md`](docs/contracts.md) · [`docs/architecture.md`](docs/architecture.md) · [`docs/design.md`](docs/design.md) · [`docs/security.md`](docs/security.md) · [`docs/writeup.md`](docs/writeup.md) · [`docs/demo-runbook.md`](docs/demo-runbook.md) · [`PROGRESS.md`](PROGRESS.md)
 
 ---
 
 ## Licence
 
-MIT.
+MIT. See [LICENSE](LICENSE).

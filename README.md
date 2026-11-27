@@ -35,7 +35,7 @@ The pool buys once for everyone, sells once for everyone when two spaced on-chai
 
 ## Contents
 
-[The problem](#the-problem) · [Skin-in-the-Game Threads & Seeker](#skin-in-the-game-threads--seeker) · [How it works](#how-it-works) · [Worked example](#worked-example) · [Architecture](#architecture) · [Guarantees](#guarantees) · [Deployment](#deployment) · [Judge quick test](#judge-quick-test-90-seconds-on-apk) · [Getting started](#getting-started) · [Testing](#testing) · [Tech stack](#tech-stack) · [Repository](#repository) · [Known limits](#known-limits) · [Documentation](#documentation) · [Team & prior research](#team--prior-research)
+[The problem](#the-problem) · [Skin-in-the-Game Threads & Seeker](#skin-in-the-game-threads--seeker) · [How it works](#how-it-works) · [Worked example](#worked-example) · [Architecture](#architecture) · [Guarantees](#guarantees) · [Deployment](#deployment) · [Judge quick test](#judge-quick-test-90-seconds-on-apk) · [Getting started](#getting-started) · [Testing](#testing) · [Tech stack](#tech-stack) · [Repository](#repository) · [Mainnet roadmap](#mainnet-roadmap--skr-business-alignment) · [Known limits](#known-limits) · [Documentation](#documentation) · [Team](#team)
 
 ---
 
@@ -327,9 +327,9 @@ docs/
 
 ---
 
-## Team & prior research
+## Team
 
-Built from scratch during the **Dev3pack Global Hackathon (27–29 November 2026)** by **Azhar** and **Youvandra**. All Rust/Anchor programs (`percaya`, `percaya_amm`), Token-2022 Seeker Genesis registry, Expo React Native Android app (MWA 2.0, on-device Devnet RPC, Camera QR, Android push notifications), and Solana Blinks API were written newly during the hackathon, building on our team's earlier EVM pooled-execution research ([`youvandra/trustpool`](https://github.com/youvandra/trustpool), MIT).
+Built from scratch during the **Dev3pack Global Hackathon (27–29 November 2026)** by **Azhar** and **Youvandra** — Rust/Anchor programs (`percaya`, `percaya_amm`), Token-2022 Seeker Genesis registry, native Expo React Native Android app (MWA 2.0, on-device Devnet RPC, Camera QR, Android push notifications), and Solana Blinks API.
 
 ---
 

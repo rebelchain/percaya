@@ -11,6 +11,7 @@ import {
   type CallSummary,
   type CallerRecord,
   type ProtocolParams,
+  type ThreadReply,
   type TokenInfo,
 } from '@percaya/core';
 
@@ -19,6 +20,8 @@ export interface PercayaStore {
   getConfig(): { params: ProtocolParams; tokens: TokenInfo[] };
   listCalls(filter?: { state?: CallState; tokenSymbol?: string; caller?: string }): CallSummary[];
   getCall(callId: number): CallDetail | null;
+  listReplies(callId: number): ThreadReply[];
+  addReply(callId: number, authorPubkey: string, body: string): ThreadReply | null;
   listCallers(): CallerRecord[];
   getCaller(pubkeyOrSkr: string): CallerRecord | null;
   listAlerts(pubkey?: string): AlertItem[];
@@ -66,17 +69,45 @@ export function createPercayaStore(mode: 'demo' | 'chain' = 'demo'): PercayaStor
       }
       // Strictly newest-first, never ranked (per design.md rule #2)
       list.sort((a, b) => b.callId - a.callId);
-      return list.map(({ positions, earlyBuyers, priceSeries, buyTxSig, sellTxSig, ...summary }) => {
-        void positions;
-        void earlyBuyers;
-        void priceSeries;
-        void buyTxSig;
-        void sellTxSig;
-        return summary;
-      });
+      return list.map(
+        ({ positions, earlyBuyers, priceSeries, replies, buyTxSig, sellTxSig, ...summary }) => {
+          void positions;
+          void earlyBuyers;
+          void priceSeries;
+          void replies;
+          void buyTxSig;
+          void sellTxSig;
+          return summary;
+        },
+      );
     },
     getCall(callId) {
       return calls.get(callId) ?? null;
+    },
+    listReplies(callId) {
+      const call = calls.get(callId);
+      return call ? [...call.replies].sort((a, b) => a.createdAt - b.createdAt) : [];
+    },
+    addReply(callId, authorPubkey, body) {
+      const call = calls.get(callId);
+      if (!call) return null;
+      const trimmed = body.trim().slice(0, 280);
+      if (!trimmed) return null;
+      const pos = call.positions.find((p) => p.participant === authorPubkey);
+      const callerInfo = callers.get(authorPubkey);
+      const reply: ThreadReply = {
+        id: `rep-${callId}-${Date.now()}`,
+        callId,
+        author: authorPubkey,
+        authorSkr: callerInfo?.skrName ?? pos?.skrName ?? null,
+        authorSeekerVerified: callerInfo?.isSeekerVerified ?? false,
+        depositedLamports: pos?.depositedLamports ?? '0',
+        isCaller: call.caller === authorPubkey,
+        body: trimmed,
+        createdAt: Math.floor(Date.now() / 1000),
+      };
+      call.replies.push(reply);
+      return reply;
     },
     listCallers() {
       const list = Array.from(callers.values());

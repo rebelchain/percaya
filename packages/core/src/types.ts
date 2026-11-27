@@ -164,10 +164,23 @@ export interface CallSummary {
   thesis: string;
 }
 
+export interface ThreadReply {
+  id: string;
+  callId: number;
+  author: string;
+  authorSkr: string | null;
+  authorSeekerVerified: boolean;
+  depositedLamports: string; // "0" => Spectator, >0 => "In Pool · X SOL"
+  isCaller: boolean;
+  body: string;
+  createdAt: number;
+}
+
 export interface CallDetail extends CallSummary {
   positions: ParticipantPosition[];
   earlyBuyers: EarlyBuyer[];
   priceSeries: PricePoint[];
+  replies: ThreadReply[];
   buyTxSig: string | null;
   sellTxSig: string | null;
 }

@@ -69,6 +69,22 @@ test('SIWS Ed25519 challenge-response issues valid bearer token for follow/watch
   assert.equal(watchRes.status, 200);
   const watchJson = (await watchRes.json()) as { watching: boolean };
   assert.equal(watchJson.watching, true);
+
+  // Reply to Call #6 -> automatically tagged as Spectator (0 SOL in pool)
+  const replyRes = await app.request('/api/calls/6/replies', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({ body: 'Watching this 4m window closely.' }),
+  });
+  assert.equal(replyRes.status, 201);
+  const replyJson = (await replyRes.json()) as {
+    reply: { depositedLamports: string; body: string };
+  };
+  assert.equal(replyJson.reply.depositedLamports, '0');
+  assert.equal(replyJson.reply.body, 'Watching this 4m window closely.');
 });
 
 test('Solana Actions (Blinks) GET & POST return CORS headers and serialized VersionedTransaction', async () => {

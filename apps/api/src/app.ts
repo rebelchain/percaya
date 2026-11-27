@@ -100,6 +100,24 @@ export function createApp(customStore?: PercayaStore) {
     return c.json({ call });
   });
 
+  app.get('/api/calls/:id/replies', (c) => {
+    const id = Number(c.req.param('id'));
+    const call = store.getCall(id);
+    if (!call) return c.json({ error: 'Call not found' }, 404);
+    return c.json({ replies: store.listReplies(id) });
+  });
+
+  app.post('/api/calls/:id/replies', async (c) => {
+    const user = requireAuth(c.req.header('Authorization'));
+    if (!user) return c.json({ error: 'Sign in via Seed Vault (SIWS) to reply' }, 401);
+    const id = Number(c.req.param('id'));
+    const { body } = await c.req.json<{ body: string }>();
+    if (!body || !body.trim()) return c.json({ error: 'Reply body required' }, 400);
+    const reply = store.addReply(id, user, body);
+    if (!reply) return c.json({ error: 'Call not found' }, 404);
+    return c.json({ reply }, 201);
+  });
+
   app.get('/api/calls/:id/card.svg', (c) => {
     const id = Number(c.req.param('id'));
     const call = store.getCall(id);

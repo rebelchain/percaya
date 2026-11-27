@@ -33,7 +33,7 @@ export async function connectSeekerWallet(apiBaseUrl: string): Promise<SeekerSes
 
   const result = await transact(async (wallet) => {
     const auth = await wallet.authorize({
-      cluster: 'devnet',
+      chain: 'solana:devnet',
       identity: APP_IDENTITY,
       sign_in_payload: noncePayload
         ? {

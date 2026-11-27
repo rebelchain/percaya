@@ -6,17 +6,15 @@
 
 ---
 
-## 1. Executive summary & origin
+## 1. Executive summary
 
-`percaya` adapts the pooled-call accountability mechanism originally validated in `TrustPool` (Monad testnet) into a native **Solana + Solana Mobile Seeker** product.
+`percaya` is a **Skin-in-the-Game Threads** mobile dApp built natively for **Solana + Solana Mobile Seeker**. It solves three structural problems in mobile crypto call groups:
 
-Moving from an EVM desktop web app to **Solana Mobile Seeker** is not a port for its own sake; it resolves three structural bottlenecks discovered in the original build:
-
-| Bottleneck in original EVM build | How `percaya` on Solana + Seeker resolves it |
+| Structural problem in crypto call groups | How `percaya` on Solana + Seeker resolves it |
 |---|---|
-| **Burner-wallet resets:** A slashed or negative-return caller could abandon their wallet and start over at Tier 0 for free | **Hardware-bound reputation (`Seeker Genesis Token`):** Tiers 1–3 require binding a 1-per-device Token-2022 Seeker Genesis Token into an on-chain `GenesisRegistry` PDA. One physical phone = one permanent track record |
-| **Desktop friction vs mobile chat reality:** Calls happen in mobile Telegram and X groups with 2–15 minute windows; switching to a desktop browser misses the window | **Native Android APK + Solana Blinks:** Callers share a link in Telegram/X that renders a Solana Action (Blink) or deep-links into the `percaya` Android app for a single biometric **Seed Vault** tap via MWA 2.0 |
-| **Shallow retail call market:** Monad had only 37 non-major tokens ($26k median liquidity) | **Solana call culture:** Solana is the primary venue for retail token calls, `.skr` social handles, sub-second confirmation, and sub-cent checkpoint/keeper transactions |
+| **Burner-wallet resets:** A slashed or negative-return caller can abandon their wallet and start over for free | **Hardware-bound reputation (`Seeker Genesis Token`):** Tiers 1–3 require binding a 1-per-device Token-2022 `NonTransferable` Seeker Genesis NFT into an on-chain `GenesisRegistry` PDA. One physical phone = one permanent track record |
+| **Desktop friction vs mobile chat reality:** Calls happen in mobile Telegram and X groups with 2–15 minute windows; switching to a desktop browser misses the window | **Native Android APK + Camera QR + Solana Blinks:** Followers scan a Call QR in person or tap a Blink in chat to inspect locked rules, sign via MWA 2.0 / Seed Vault, and receive native Android push notifications when the pool buys or settles |
+| **Zero skin-in-the-game & selective memory:** Callers shill without risking capital and delete losing posts | **Call-as-a-Thread + on-chain record:** You cannot post a root thread without locking SOL first (`>= 5%` of pool). Replies auto-tag `In Pool · X SOL` vs `Spectator`, and every settled outcome—losses included—stays permanently on chain |
 
 ---
 
@@ -34,7 +32,7 @@ Moving from an EVM desktop web app to **Solana Mobile Seeker** is not a port for
 | **Product clarity & real-world impact** | Clear problem, non-gimmicky mechanism, founder-market fit | Solves influencer front-running & cherry-picked win rates without relying on moderation |
 | **Solana & Mobile SDK depth** | Native usage of Solana primitives & Solana Mobile Stack in code inspection | Anchor PDAs, CPI AMM swaps, Token-2022 `NonTransferable` Genesis check, MWA 2.0 + SIWS, `.skr` domain lookup, Solana Actions (`ACTIONS.json`) |
 | **Live demo verification** | End-to-end working product on Devnet, zero mocked transactions in live flow | Signed Android APK running against Solana Devnet + Seed Vault Simulator, deterministic `move-price` script triggering live keeper TP/SL settlement |
-| **Repository quality** | Clean architecture, automated tests, honest security & trade-off documentation | Monorepo with LiteSVM/Anchor unit + invariant tests, Bun API tests, dual-mode store, explicit security & limits docs |
+| **Repository quality** | Clean architecture, automated tests, honest security & trade-off documentation | Monorepo with LiteSVM/Anchor E2E tests (`4/4`), core math tests (`6/6`), Node 24 API/Blink tests (`3/3`), mobile QR/notification unit tests (`6/6`), dual-mode store, and explicit security & limits docs |
 
 ---
 
@@ -139,11 +137,11 @@ What goes on the caller's record is always the **net return to participants afte
 
 | Parameter | Production default | Devnet hackathon demo | Notes |
 |---|---|---|---|
-| `min_bond` | `2 SOL` | `0.2 SOL` | Fits standard `solana airdrop 2` on Devnet |
-| `min_pool` | `4 SOL` | `0.05 SOL` | `<= 2 × min_bond` so Tier 0 callers can open immediately |
-| `window_duration` | `15 min` – `6 h` | `90 sec` – `10 min` | Short demo windows allow live full-cycle walkthroughs |
+| `min_bond` | `2 SOL` | `0.05 SOL` | Fits quick Devnet testing & 0.08 SOL Judge Faucet |
+| `min_pool` | `4 SOL` | `0.01 SOL` | `<= 2 × min_bond` so Tier 0 callers can open immediately |
+| `window_duration` | `15 min` – `6 h` | `60 sec` – `10 min` | Short demo windows allow live full-cycle walkthroughs |
 | `buy_grace` | `1 h` | `10 min` | `buy_deadline = window_end + buy_grace` |
-| `max_hold` | `1 h` – `72 h` | `3 min` – `30 min` | Configurable per call within bounds |
+| `max_hold` | `1 h` – `72 h` | `2 min` – `30 min` | Configurable per call within bounds |
 | `checkpoint_gap` | `10 min` | `45 sec` | Fast enough to demonstrate 2 spaced checkpoints live |
 | `split_grace` | `6 h` | `10 min` | Fallback window before token split |
 | `bond_cooldown` | `7 days` | `5 min` | Unbonding delay when `active == 0` |
@@ -161,8 +159,8 @@ What goes on the caller's record is always the **net return to participants afte
 ### Must-Have (P0 — Demo blockers)
 - **`percaya` Anchor Program:** Full lifecycle (`post_bond`, `verify_seeker_genesis`, `open_call`, `deposit`, `withdraw`, `buy`, `checkpoint`, `sell`, `refund`, `split`, `claim`, `slash`) with `u128` safe math and LiteSVM/Anchor tests.
 - **`percaya_amm` Constant-Product Program & Seeder:** On-chain `SOL <-> SPL` pools (`tBONK`, `tWIF`, `tSKR`), Token-2022 Devnet Genesis NFT minter, and `move-price.ts` CLI for live TP/SL demo triggers.
-- **Expo React Native Android App (`apps/mobile`):** Calm light-theme 4-tab native UI, MWA 2.0 wallet connect + SIWS, Seed Vault Simulator transaction signing, `.skr` + Genesis badge display, live countdowns, 3-step Open Call wizard, 1-tap Deposit/Checkpoint/Sell/Claim bottom sheets.
-- **Bun + Hono API (`apps/api`):** Dual-mode (`DATA=demo` & `DATA=chain`), Anchor indexer, automated Keeper (simulates before sending `checkpoint`/`sell`/`refund`/`split`), SSE live stream.
+- **Expo React Native Android App (`apps/mobile`):** Calm light-theme 5-tab Threads UI (`Home`, `Callers`, `+ Post`, `Activity`, `Profile`), direct on-device Devnet RPC reader & tx builder (`chain-direct.ts`), idiomatic `useMobileWallet` hook (MWA 2.0 + Fake Wallet fallback + 1-tap Judge Devnet Faucet), native Camera QR Call Scanner (`expo-camera`) + Call QR Sheet, and Android local push notifications (`expo-notifications`).
+- **Node 24 + Hono API (`apps/api`):** Dual-mode (`DATA=demo` & `DATA=chain`), Anchor PDA indexer, simulating Auto-Keeper (`checkpoint`/`sell`/`refund`/`split`), Ed25519 SIWS auth, rate-limited `/api/faucet`, and SSE live stream.
 - **Lightweight Web Preview & Solana Actions (`apps/web` + `/api/actions/call/:id`):** Shareable pool preview URL + valid `ACTIONS.json` Blink returning a ready-to-sign `deposit` transaction + Android App Link intent into the APK.
 
 ### Should-Have (P1 — High differentiation, low effort)

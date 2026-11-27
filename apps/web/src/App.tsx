@@ -167,6 +167,10 @@ export function App() {
       <main className="flex-1 max-w-3xl w-full mx-auto px-4 py-6 space-y-6">
         {path === '/docs' ? (
           <DocsView params={params} programIds={programIds} />
+        ) : path === '/privacy' ? (
+          <PrivacyView onBack={() => navigate('/')} />
+        ) : path === '/terms' ? (
+          <TermsView onBack={() => navigate('/')} />
         ) : selectedCall ? (
           <CallDetailView
             call={selectedCall}
@@ -256,7 +260,15 @@ export function App() {
       <footer className="border-t border-line bg-surface mt-12">
         <div className="max-w-3xl mx-auto px-4 py-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 text-xs text-ink-3">
           <span>percaya · Solana Devnet prototype · Unaudited hackathon experiment</span>
-          <span>Callers: {DEMO_CALLERS.length} active · Spot SOL pools only</span>
+          <div className="flex items-center gap-3">
+            <button type="button" onClick={() => navigate('/privacy')} className="hover:text-ink">
+              Privacy Policy
+            </button>
+            <span>·</span>
+            <button type="button" onClick={() => navigate('/terms')} className="hover:text-ink">
+              Terms of Use
+            </button>
+          </div>
         </div>
       </footer>
     </div>
@@ -676,6 +688,80 @@ function DocsView({
             percaya_amm: {programIds.ammProgramId.slice(0, 8)}… <ExternalLink className="w-3.5 h-3.5" />
           </a>
         </div>
+      </div>
+    </div>
+  );
+}
+
+function PrivacyView({ onBack }: { onBack: () => void }) {
+  return (
+    <div className="space-y-4">
+      <button type="button" onClick={onBack} className="text-sm text-ink-2 hover:text-ink">
+        ← Back to calls
+      </button>
+      <div className="bg-surface rounded-card border border-line p-5 shadow-card space-y-3">
+        <h1 className="text-lg font-semibold text-ink">Privacy Policy</h1>
+        <p className="text-xs text-ink-3">Effective date: 27 November 2026 · Package: com.percaya.seeker</p>
+        <ul className="space-y-2 text-sm text-ink-2 list-disc pl-5">
+          <li>
+            <strong>Non-custodial wallet keys:</strong> Private keys never leave your Solana Seeker
+            Seed Vault or Mobile Wallet Adapter (MWA) wallet app. `percaya` only receives public
+            wallet addresses and signed transactions or SIWS proofs.
+          </li>
+          <li>
+            <strong>Camera permission (`android.permission.CAMERA`):</strong> Used strictly on-device
+            to scan `percaya://c/:id` Call QR codes. No photos, video frames, or camera metadata are
+            stored or transmitted.
+          </li>
+          <li>
+            <strong>Notifications (`android.permission.POST_NOTIFICATIONS`):</strong> Used solely for
+            local Android status notifications when calls you watch or join change on-chain state
+            (`Holding`, `Settled`, `Refunded`, `Split`).
+          </li>
+          <li>
+            <strong>Public blockchain data:</strong> Calls, stakes, rules, and settlements submitted
+            to Solana Devnet are permanently public on the Solana ledger.
+          </li>
+          <li>
+            <strong>Contact:</strong> For privacy inquiries or deletion of off-chain thread replies,
+            contact <span className="num">team@percaya.app</span>.
+          </li>
+        </ul>
+      </div>
+    </div>
+  );
+}
+
+function TermsView({ onBack }: { onBack: () => void }) {
+  return (
+    <div className="space-y-4">
+      <button type="button" onClick={onBack} className="text-sm text-ink-2 hover:text-ink">
+        ← Back to calls
+      </button>
+      <div className="bg-surface rounded-card border border-line p-5 shadow-card space-y-3">
+        <h1 className="text-lg font-semibold text-ink">Terms of Use</h1>
+        <p className="text-xs text-ink-3">Effective date: 27 November 2026 · MIT Open Source</p>
+        <ul className="space-y-2 text-sm text-ink-2 list-disc pl-5">
+          <li>
+            <strong>Experimental Devnet software:</strong> `percaya` is an un-audited hackathon
+            prototype running on Solana Devnet with test SOL and test SPL tokens. Do not use it with
+            real Mainnet capital prior to independent security audits and legal structuring.
+          </li>
+          <li>
+            <strong>No financial advice:</strong> Call theses and token selections are published by
+            independent on-chain callers, never by `percaya`. Past settled returns do not predict
+            future outcomes.
+          </li>
+          <li>
+            <strong>On-chain immutability:</strong> Rules snapshotted at `open_call` cannot be
+            altered by callers or admins. You are solely responsible for reviewing exit rules before
+            signing any transaction in your wallet.
+          </li>
+          <li>
+            <strong>Open-source license:</strong> Provided &ldquo;AS IS&rdquo; without warranty of
+            any kind under the MIT License.
+          </li>
+        </ul>
       </div>
     </div>
   );

@@ -21,7 +21,6 @@ import {
   Platform,
   Pressable,
   RefreshControl,
-  SafeAreaView,
   ScrollView,
   Share,
   StatusBar as RNStatusBar,
@@ -30,6 +29,7 @@ import {
   TextInput,
   View,
 } from 'react-native';
+import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { useMobileWallet } from './src/hooks/useMobileWallet';
 import { CallQrModal, CallScannerModal } from './src/components/CallQr';
 import { JudgeChecklistCard, WelcomeModal } from './src/components/OnboardingGuide';
@@ -653,8 +653,9 @@ export default function App() {
   );
 
   return (
-    <SafeAreaView style={styles.safe}>
-      <StatusBar style="dark" backgroundColor={C.surface} />
+    <SafeAreaProvider>
+    <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
+      <StatusBar style="dark" backgroundColor={C.surface} translucent={false} />
 
       {/* Threads-style Top Bar */}
       <View style={styles.topBar}>
@@ -1670,26 +1671,27 @@ export default function App() {
         )}
       </Modal>
     </SafeAreaView>
+    </SafeAreaProvider>
   );
 }
 
 const styles = StyleSheet.create({
   safe: {
     flex: 1,
-    backgroundColor: C.bg,
-    paddingTop: Platform.OS === 'android' ? (RNStatusBar.currentHeight ?? 36) : 0,
+    backgroundColor: C.surface,
   },
   topBar: {
-    height: 54,
+    minHeight: 54,
+    paddingVertical: 8,
     backgroundColor: C.surface,
     borderBottomWidth: 1,
     borderBottomColor: C.line,
-    paddingHorizontal: 16,
+    paddingHorizontal: 12,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
   },
-  brandRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  brandRow: { flexDirection: 'row', alignItems: 'center', gap: 6, flexShrink: 1 },
   vesselBadge: {
     width: 22,
     height: 20,

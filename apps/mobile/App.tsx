@@ -79,7 +79,9 @@ export default function App() {
   const [feedMode, setFeedMode] = useState<FeedMode>('newest');
   const [stateFilter, setStateFilter] = useState<CallState | 'All'>('All');
   const [tokenFilter, setTokenFilter] = useState<string>('All');
-  const [calls, setCalls] = useState<CallDetail[]>(() => structuredClone(DEMO_CALLS));
+  const [calls, setCalls] = useState<CallDetail[]>(
+    () => JSON.parse(JSON.stringify(DEMO_CALLS)) as CallDetail[],
+  );
   const [selectedCallId, setSelectedCallId] = useState<number | null>(null);
   const [selectedCaller, setSelectedCaller] = useState<CallerRecord | null>(null);
   const [callerProfileTab, setCallerProfileTab] = useState<ProfileTab>('calls');

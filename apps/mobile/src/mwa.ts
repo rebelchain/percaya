@@ -85,9 +85,13 @@ export async function connectSeekerWallet(apiBaseUrl: string): Promise<SeekerSes
 }
 
 /**
- * Signs a VersionedTransaction via Seed Vault / MWA 2.0 (`signTransactions`) and
- * broadcasts directly to Solana Devnet RPC. Using `signTransactions` avoids Solflare's
- * Android MWA WebSocket `CancellationException` timeout during internal wallet broadcast.
+ * Signs and sends a VersionedTransaction via Seed Vault / MWA 2.0 (`signAndSendTransactions`).
+ *
+ * Solflare Android has a known MWA quirk where it broadcasts the transaction to Devnet on
+ * swipe-approve and immediately closes the local MWA WebSocket before returning the RPC
+ * response, throwing `CancellationException` / `Local association cancelled`. When that
+ * occurs, we verify directly against Devnet RPC whether the fee payer landed a new confirmed
+ * transaction right after the prompt so the user gets an accurate on-chain receipt.
  */
 export async function signAndSendViaSeedVault(
   serializedTxBase64: string,
@@ -95,27 +99,67 @@ export async function signAndSendViaSeedVault(
 ): Promise<string> {
   const rawBytes = Uint8Array.from(atob(serializedTxBase64), (c) => c.charCodeAt(0));
   const tx = VersionedTransaction.deserialize(rawBytes);
-
-  const signedTxs = await transact(async (wallet) => {
-    if (mwaAuthToken) {
-      await wallet.authorize({
-        auth_token: mwaAuthToken,
-        chain: 'solana:devnet',
-        identity: APP_IDENTITY,
-      });
-    } else {
-      await wallet.authorize({ chain: 'solana:devnet', identity: APP_IDENTITY });
-    }
-    return wallet.signTransactions({
-      transactions: [tx],
-    });
-  });
-
+  const payer = tx.message.staticAccountKeys[0];
   const conn = new Connection(DEVNET_RPC, 'confirmed');
-  const sig = await conn.sendRawTransaction(signedTxs[0].serialize(), {
-    skipPreflight: false,
-    maxRetries: 5,
-  });
-  await conn.confirmTransaction(sig, 'confirmed');
-  return sig;
+
+  let prevSig: string | null = null;
+  try {
+    const recent = await conn.getSignaturesForAddress(payer, { limit: 1 });
+    prevSig = recent[0]?.signature ?? null;
+  } catch {
+    // Best-effort baseline before MWA prompt
+  }
+  const startedAtSec = Math.floor(Date.now() / 1000);
+
+  try {
+    const signatures = await transact(async (wallet) => {
+      if (mwaAuthToken) {
+        await wallet.authorize({
+          auth_token: mwaAuthToken,
+          chain: 'solana:devnet',
+          identity: APP_IDENTITY,
+        });
+      } else {
+        await wallet.authorize({ chain: 'solana:devnet', identity: APP_IDENTITY });
+      }
+      return wallet.signAndSendTransactions({
+        transactions: [tx],
+      });
+    });
+
+    const sig = signatures[0];
+    if (sig) {
+      await conn.confirmTransaction(sig, 'confirmed').catch(() => {});
+      return sig;
+    }
+    throw new Error('Wallet returned empty transaction signature');
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    const maybePostBroadcastDisconnect =
+      msg.includes('CancellationException') ||
+      msg.includes('cancelled') ||
+      msg.includes('closed') ||
+      msg.includes('SESSION_CLOSED');
+
+    if (maybePostBroadcastDisconnect) {
+      for (let attempt = 0; attempt < 5; attempt++) {
+        await new Promise((r) => setTimeout(r, 1500));
+        try {
+          const latest = await conn.getSignaturesForAddress(payer, { limit: 5 });
+          const landed = latest.find(
+            (s) =>
+              s.signature !== prevSig &&
+              s.err === null &&
+              (s.blockTime ?? startedAtSec) >= startedAtSec - 15,
+          );
+          if (landed) {
+            return landed.signature;
+          }
+        } catch {
+          // Keep polling
+        }
+      }
+    }
+    throw err;
+  }
 }

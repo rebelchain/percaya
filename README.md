@@ -14,6 +14,11 @@ The pool buys once for everyone, sells once for everyone when two spaced on-chai
 [![Node 24](https://img.shields.io/badge/Node.js-24_%C2%B7_Hono_4.7-339933)](apps/api)
 [![Licence](https://img.shields.io/badge/licence-MIT-blue)](LICENSE)
 
+> **For Hackathon Judges (Zero Setup Required):**
+> - **Download Signed Release APK (`v0.1.0`, RSA-2048):** [`percaya-v0.1.0-devnet.apk`](https://github.com/rebelchain/percaya/releases/download/v0.1.0/percaya-v0.1.0-devnet.apk) · ([Release Notes & SHA-256](https://github.com/rebelchain/percaya/releases/tag/v0.1.0))
+> - **Live Web Preview, Blinks & Compliance Pages:** [https://percaya.duckdns.org](https://percaya.duckdns.org) · ([Privacy](https://percaya.duckdns.org/privacy) · [Terms](https://percaya.duckdns.org/terms))
+> - **90-Second Testing Walkthrough:** [Jump to Judge Quick Test](#judge-quick-test-90-seconds-on-apk)
+
 ---
 
 ## Contents
@@ -175,7 +180,11 @@ Live on **Solana Devnet** (`packages/core/src/devnet-deployment.json`, deployed 
 
 No local backend or `adb reverse` is required to evaluate the Android APK:
 
-1. **Install `app-release.apk`** on a Solana Seeker, physical Android device, or Android Emulator (with Seed Vault, Solflare Devnet, Phantom Devnet, or MWA Fake Wallet).
+1. **Download & install [`percaya-v0.1.0-devnet.apk`](https://github.com/rebelchain/percaya/releases/download/v0.1.0/percaya-v0.1.0-devnet.apk)** on a Solana Seeker, physical Android device, or Android Emulator (with Seed Vault, Solflare Devnet, Phantom Devnet, or MWA Fake Wallet):
+   ```bash
+   curl -fSL -o percaya-v0.1.0-devnet.apk https://github.com/rebelchain/percaya/releases/download/v0.1.0/percaya-v0.1.0-devnet.apk
+   adb install -r percaya-v0.1.0-devnet.apk
+   ```
 2. **Cold boot → `● Devnet Live`:** The app automatically reads live `CallPool`, `CallerRecord`, `Position`, and `AmmPool` PDAs directly from `https://api.devnet.solana.com` via `apps/mobile/src/chain-direct.ts`.
 3. **Connect via MWA 2.0:** Tap **`Sign in`** (supports 1-prompt SIWS and automatically falls back to standard `authorize` for Fake Wallet).
 4. **0-SOL Wallet? Tap `Claim Judge Test SOL`:** If your test wallet holds `< 0.06 SOL`, a calm banner at the top of `Home` (and in `Profile`) lets you fund `+0.08 Devnet SOL` in one tap.

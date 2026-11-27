@@ -43,5 +43,5 @@ Living execution tracker for **Dev3pack Global Hackathon (27–29 Nov 2026)**.
 - [x] Add native phone hardware features: `expo-camera` QR Call Scanner, SVG Call QR Sheet, and `expo-notifications` watched-call state transition alerts (`6/6` mobile unit tests, verified on standalone Release APK) (`2400395`, `55bb4bb`)
 - [x] Configure dedicated RSA-2048 release keystore (`percaya-release.keystore`, verified with `apksigner` SHA-256 `8B:86:97…25:CB`) & `/privacy` + `/terms` pages for Solana dApp Store submission (`f454d1a`, `4a4acc3`, `06578a9`)
 - [x] Deploy public HTTPS backend (`apps/api` `DATA=chain` + Auto-Keeper + `/api/faucet`) & `apps/web` live at `https://percaya.duckdns.org` with Let's Encrypt TLS (`0e39af0`, `f28482d`)
-- [ ] Rebuild final signed Release APK pointing to `https://percaya.duckdns.org` & publish on GitHub Releases
+- [x] Rebuild final signed Release APK pointing to `https://percaya.duckdns.org` & publish on GitHub Releases (`v0.1.0` — `percaya-v0.1.0-devnet.apk`)
 - [ ] Record 3-minute live Devnet demo video and submit on `hack.dev3pack.xyz` (Team: Azhar & Youvandra)

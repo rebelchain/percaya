@@ -9,9 +9,9 @@
 ```mermaid
 flowchart TB
     subgraph Android["Android Device / Emulator (Expo SDK 52 · RN 0.76.7 · Hermes)"]
-        App["percaya 5-Tab Threads UI<br/>Home · Callers · + Post · Activity · Profile"]
-        MWA["Mobile Wallet Adapter 2.0<br/>@solana-mobile/mobile-wallet-adapter-protocol-web3js"]
-        Wallet["Seed Vault / Solflare / Phantom<br/>Biometric Sign + SIWS"]
+        App["percaya 5-Tab Threads UI<br/>Camera QR · Push Alerts · Direct Devnet RPC"]
+        MWA["useMobileWallet (MWA 2.0)<br/>@solana-mobile/mobile-wallet-adapter-protocol-web3js"]
+        Wallet["Seed Vault / Solflare / Phantom / Fake Wallet<br/>Biometric Sign + SIWS"]
         App --> MWA --> Wallet
     end
 
@@ -70,9 +70,12 @@ flowchart TB
 - **Live Alerts (`GET /api/me/stream` + optional Telegram Bot):** SSE stream with heartbeat and optional `TELEGRAM_BOT_TOKEN` push.
 
 ### 2.3 Mobile App (`apps/mobile`, Expo SDK 52 · React Native 0.76.7 · Hermes)
-- **5-Tab Threads UI (`App.tsx`):** `Home` (`For you (Newest)` & `Following` feeds with vertical thread connectors and inline reply previews), `Callers` (directory + token filter), `+ Post` (3-step immutable call wizard), `Activity` (alerts), and `Profile` (`.skr` identity, Seeker Genesis status, bond).
-- **Live Devnet Sync:** Polls `API_BASE` (`http://10.0.2.2:8787` on Emulator) with `RefreshControl` pull-to-refresh and a live status pill (`● Devnet Live` / `● API Demo`), falling back cleanly to demo fixtures when offline.
-- **MWA 2.0 + Seed Vault (`src/mwa.ts`):** Uses `@solana-mobile/mobile-wallet-adapter-protocol-web3js` (`chain: 'solana:devnet'`, `sign_in_payload` for 1-prompt SIWS, `signAndSendTransactions`) with `unstable_enablePackageExports = true` in `metro.config.js` and Hermes-safe cloning.
+- **5-Tab Threads UI (`App.tsx`):** `Home` (`For you (Newest)` & `Following` feeds with vertical thread connectors and inline reply previews), `Callers` (directory + token filter), `+ Post` (3-step immutable call wizard), `Activity` (alerts), and `Profile` (live Devnet SOL balance, real on-chain `CallerRecord` stats, `Claim Test SOL` faucet button, and `Disconnect`).
+- **On-Device Direct Devnet Engine (`src/chain-direct.ts`):** When no hosted/local API is reachable (e.g., cold-installed APK on a judge's Seeker or Android emulator), reads `AmmPool`, `CallerRecord`, `Position`, and `CallPool` PDAs directly from `https://api.devnet.solana.com` using pure `DataView` Borsh decoding and builds `open_call`, `deposit`, `checkpoint`, `sell`, and `claim` `VersionedTransaction`s on-device. When an API (`EXPO_PUBLIC_API_URL` or local `8787`) is reachable, prefers the API for Thread Replies & SSE.
+- **Idiomatic `useMobileWallet` Hook (`src/hooks/useMobileWallet.ts` & `src/mwa.ts`):** Follows `solana-mobile-skills` patterns (`chain: 'solana:devnet'`, 1-prompt SIWS with automatic fallback to standard `authorize` for Fake Wallet / legacy MWA wallets, `signAndSendTransactions` with Devnet RPC receipt verification for Solflare Android's post-broadcast WebSocket disconnect, and zero silent mock logins).
+- **Native Phone Hardware Features:**
+  - **Camera QR Call Scanner & Call QR Sheet (`src/components/CallQr.tsx`, `src/call-links.ts`):** `expo-camera` scans `percaya://c/:id` and `https://percaya.app/c/:id` QR codes to jump straight into a pool; every Call Detail renders a scannable SVG QR (`react-native-qrcode-svg`).
+  - **Android Local Push Notifications (`src/notifications.ts`, `src/call-diff.ts`):** `expo-notifications` triggers system notifications when watched or joined calls transition to `Holding`, `Settled` (with signed net return), `Refunded`, or `Split`. Covered by **6/6** unit tests (`npm --workspace @percaya/mobile run test`).
 - **dApp Store Ready:** Includes `apps/mobile/dapp-store/config.yaml` and supports standalone local Gradle builds (`./gradlew assembleRelease`).
 
 ### 2.4 Web Preview (`apps/web`, Vite 6 + React 18 + Tailwind 3.4)
@@ -94,6 +97,8 @@ flowchart TB
 | `POST /api/me/follow` · `POST /api/me/watch` | SIWS | Follow caller or watch call |
 | `GET /api/me/alerts` · `GET /api/me/stream` | Public / SSE | Alert inbox & live SSE stream |
 | `GET /actions.json` · `GET/POST /api/actions/call/:id` | Public | Solana Actions / Blinks endpoints |
+| `POST /api/tx/open-call` · `POST /api/tx/:action/:id` | Public | Unsigned `VersionedTransaction` builders (`open_call`, `checkpoint`, `sell`, `claim`) |
+| `POST /api/faucet` | Public (rate-limited) | Devnet Judge micro-faucet (`0.08 SOL` / wallet / 6h) for 0-SOL wallets |
 | `GET /.well-known/assetlinks.json` | Public | Android App Links verification |
 
 ---

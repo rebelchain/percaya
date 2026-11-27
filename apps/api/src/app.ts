@@ -344,10 +344,10 @@ export function createApp(customStore?: PercayaStore) {
     }
   });
 
-  // Rate-limited Judge Devnet Micro-Faucet (0.08 SOL / wallet / 6h) for 0-SOL Fake Wallet / Seeker testing
+  // Rate-limited Judge Devnet Micro-Faucet (0.15 SOL / wallet / 5m) for 0-SOL Fake Wallet / Seeker testing
   const faucetHistory = new Map<string, number>();
-  const FAUCET_COOLDOWN_MS = 6 * 60 * 60 * 1000;
-  const FAUCET_DRIP_LAMPORTS = 80_000_000; // 0.08 SOL (covers 0.05 bond + 0.01 stake + fees)
+  const FAUCET_COOLDOWN_MS = 5 * 60 * 1000;
+  const FAUCET_DRIP_LAMPORTS = 150_000_000; // 0.15 SOL (covers SGT + 0.05 bond + 0.01 stake + headroom)
 
   app.post('/api/faucet', async (c) => {
     try {
@@ -365,7 +365,7 @@ export function createApp(customStore?: PercayaStore) {
       const key = recipient.toBase58();
       const lastDrip = faucetHistory.get(key) ?? 0;
       if (Date.now() - lastDrip < FAUCET_COOLDOWN_MS) {
-        return c.json({ error: 'Wallet already funded recently on Devnet (6h cooldown)' }, 429);
+        return c.json({ error: 'Wallet already funded recently on Devnet (5m cooldown)' }, 429);
       }
 
       const conn = new Connection(rpcUrl, 'confirmed');

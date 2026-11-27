@@ -19,6 +19,18 @@ The pool buys once for everyone, sells once for everyone when two spaced on-chai
 > - **Live Web Preview, Blinks & Compliance Pages:** [https://percaya.duckdns.org](https://percaya.duckdns.org) · ([Privacy](https://percaya.duckdns.org/privacy) · [Terms](https://percaya.duckdns.org/terms))
 > - **90-Second Testing Walkthrough:** [Jump to Judge Quick Test](#judge-quick-test-90-seconds-on-apk)
 
+### Android App Preview (`percaya` on Solana Devnet)
+
+<table>
+  <tr>
+    <td align="center"><img src="docs/assets/screenshots/01-home-feed.jpg" width="160" alt="Home Feed (Devnet Live)" /><br /><sub><b>Home · Devnet Live</b></sub></td>
+    <td align="center"><img src="docs/assets/screenshots/02-callers.png" width="160" alt="Callers Directory" /><br /><sub><b>Callers · No Ranking</b></sub></td>
+    <td align="center"><img src="docs/assets/screenshots/03-compose-call.png" width="160" alt="Compose Call Thread" /><br /><sub><b>+ Post · Lock SOL</b></sub></td>
+    <td align="center"><img src="docs/assets/screenshots/04-activity.png" width="160" alt="Activity Alerts" /><br /><sub><b>Activity · Alerts</b></sub></td>
+    <td align="center"><img src="docs/assets/screenshots/05-profile-mwa.png" width="160" alt="Seeker Profile & MWA 2.0" /><br /><sub><b>Profile · MWA 2.0</b></sub></td>
+  </tr>
+</table>
+
 ---
 
 ## Contents

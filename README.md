@@ -35,7 +35,7 @@ The pool buys once for everyone, sells once for everyone when two spaced on-chai
 
 ## Contents
 
-[The problem](#the-problem) · [Skin-in-the-Game Threads & Seeker](#skin-in-the-game-threads--seeker) · [How it works](#how-it-works) · [Worked example](#worked-example) · [Architecture](#architecture) · [Guarantees](#guarantees) · [Deployment](#deployment) · [Judge quick test](#judge-quick-test-90-seconds-on-apk) · [Getting started](#getting-started) · [Testing](#testing) · [Tech stack](#tech-stack) · [Repository](#repository) · [Mainnet roadmap](#mainnet-roadmap--skr-business-alignment) · [Known limits](#known-limits) · [Documentation](#documentation) · [Team](#team)
+[The problem](#the-problem) · [Skin-in-the-Game Threads & Seeker](#skin-in-the-game-threads--seeker) · [How it works](#how-it-works) · [Worked example](#worked-example) · [Architecture](#architecture) · [Guarantees](#guarantees) · [Deployment](#deployment) · [Judge quick test](#judge-quick-test-90-seconds-on-apk) · [Getting started](#getting-started) · [Testing](#testing) · [Tech stack](#tech-stack) · [Repository](#repository) · [Mainnet roadmap](#mainnet-roadmap--skr-business-alignment) · [Known limits](#known-limits) · [Documentation](#documentation) · [AI usage](#ai-usage--human-verification) · [Team & origin](#team--origin)
 
 ---
 
@@ -323,13 +323,19 @@ docs/
 
 ## Documentation
 
-- [`docs/prd.md`](docs/prd.md) · [`docs/contracts.md`](docs/contracts.md) · [`docs/architecture.md`](docs/architecture.md) · [`docs/design.md`](docs/design.md) · [`docs/security.md`](docs/security.md) · [`docs/writeup.md`](docs/writeup.md) · [`docs/demo-runbook.md`](docs/demo-runbook.md) · [`PROGRESS.md`](PROGRESS.md)
+- [`docs/prd.md`](docs/prd.md) · [`docs/contracts.md`](docs/contracts.md) · [`docs/architecture.md`](docs/architecture.md) · [`docs/design.md`](docs/design.md) · [`docs/security.md`](docs/security.md) · [`docs/writeup.md`](docs/writeup.md) · [`docs/demo-runbook.md`](docs/demo-runbook.md) · [`PROGRESS.md`](PROGRESS.md) · [`AI_USAGE.md`](AI_USAGE.md)
 
 ---
 
-## Team
+## AI usage & human verification
 
-Built from scratch during the **Dev3pack Global Hackathon (27–29 November 2026)** by **Azhar** and **Youvandra** — Rust/Anchor programs (`percaya`, `percaya_amm`), Token-2022 Seeker Genesis registry, native Expo React Native Android app (MWA 2.0, on-device Devnet RPC, Camera QR, Android push notifications), and Solana Blinks API.
+This project was built with **Google Antigravity** as an AI coding assistant under continuous **human direction, code inspection, security review, and live device testing** by Azhar and Youvandra. Every smart contract, transaction builder, and mobile flow was verified through `24/24` automated tests, live Solana Devnet transactions, and manual testing on signed release APKs. See full disclosure in [`AI_USAGE.md`](AI_USAGE.md).
+
+---
+
+## Team & origin
+
+Built from scratch during the **Dev3pack Global Hackathon (27–29 November 2026)** by **Azhar** and **Youvandra**. `percaya` evolves the pooled-call accountability mechanism and calm editorial design originally created by our teammate Youvandra in [`youvandra/trustpool`](https://github.com/youvandra/trustpool) (MIT), re-architected from the ground up for **Solana (Anchor / Rust)**, **Solana Mobile Seeker (MWA 2.0 + Token-2022 Seeker Genesis)**, **Camera QR & Android notifications**, and **Solana Blinks**.
 
 ---
 

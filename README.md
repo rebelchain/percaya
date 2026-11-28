@@ -335,7 +335,7 @@ This project was built with **Google Antigravity** as an AI coding assistant und
 
 ## Team & origin
 
-Built from scratch during the **Dev3pack Global Hackathon (27–29 November 2026)** by **Azhar** and **Youvandra**. `percaya` evolves the pooled-call accountability mechanism and calm editorial design originally created by our teammate Youvandra in [`youvandra/trustpool`](https://github.com/youvandra/trustpool) (MIT), re-architected from the ground up for **Solana (Anchor / Rust)**, **Solana Mobile Seeker (MWA 2.0 + Token-2022 Seeker Genesis)**, **Camera QR & Android notifications**, and **Solana Blinks**.
+Built from scratch during the **Dev3pack Global Hackathon (27–29 November 2026)** by **Azhar** and **Youvandra**. `percaya` evolves the pooled-call accountability mechanism and calm editorial design originally created by Youvandra, architected from the ground up for **Solana (Anchor / Rust)**, **Solana Mobile Seeker (MWA 2.0 + Token-2022 Seeker Genesis)**, **Camera QR & Android notifications**, and **Solana Blinks**.
 
 ---
 

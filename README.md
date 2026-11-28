@@ -24,10 +24,10 @@ The pool buys once for everyone, sells once for everyone when two spaced on-chai
 <table>
   <tr>
     <td align="center"><img src="docs/assets/screenshots/01-home-feed.jpg" width="160" alt="Home Feed (Devnet Live)" /><br /><sub><b>Home · Devnet Live</b></sub></td>
-    <td align="center"><img src="docs/assets/screenshots/02-callers.png" width="160" alt="Callers Directory" /><br /><sub><b>Callers · No Ranking</b></sub></td>
-    <td align="center"><img src="docs/assets/screenshots/03-compose-call.png" width="160" alt="Compose Call Thread" /><br /><sub><b>+ Post · Lock SOL</b></sub></td>
-    <td align="center"><img src="docs/assets/screenshots/04-activity.png" width="160" alt="Activity Alerts" /><br /><sub><b>Activity · Alerts</b></sub></td>
-    <td align="center"><img src="docs/assets/screenshots/05-profile-mwa.png" width="160" alt="Seeker Profile & MWA 2.0" /><br /><sub><b>Profile · MWA 2.0</b></sub></td>
+    <td align="center"><img src="docs/assets/screenshots/02-callers.jpg" width="160" alt="Callers Directory" /><br /><sub><b>Callers · No Ranking</b></sub></td>
+    <td align="center"><img src="docs/assets/screenshots/03-compose-call.jpg" width="160" alt="Create Call Wizard" /><br /><sub><b>+ Post · Lock SOL</b></sub></td>
+    <td align="center"><img src="docs/assets/screenshots/04-activity.jpg" width="160" alt="Activity Alerts" /><br /><sub><b>Activity · Alerts</b></sub></td>
+    <td align="center"><img src="docs/assets/screenshots/05-profile-mwa.png" width="160" alt="Seeker Profile & Wallet Connect" /><br /><sub><b>Profile · Seeker</b></sub></td>
   </tr>
 </table>
 

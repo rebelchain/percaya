@@ -56,10 +56,12 @@ export function useMobileWallet(apiBaseUrl: string | null) {
       const isMissingWallet =
         raw.includes('ERROR_WALLET_NOT_FOUND') || raw.includes('Found no installed wallet');
       Alert.alert(
-        isMissingWallet ? 'No MWA Wallet Installed' : 'Wallet Connection Cancelled',
+        isMissingWallet ? 'No Compatible Wallet Found' : 'Connection Cancelled',
         isMissingWallet
-          ? 'Install Solana Seeker Seed Vault, Solflare, Phantom, or the MWA Fake Wallet on this Android device to sign Devnet transactions.'
-          : raw || 'Unable to establish Mobile Wallet Adapter session.',
+          ? __DEV__
+            ? 'Install Solana Seeker Seed Vault, Solflare, Phantom, or MWA Fake Wallet (dev) on this Android device.'
+            : 'Install Solana Seeker Seed Vault, Solflare, or Phantom on this device to connect.'
+          : raw || 'Wallet session was cancelled before signing in.',
       );
       return null;
     } finally {

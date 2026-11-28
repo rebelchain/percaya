@@ -29,6 +29,7 @@ import {
 } from './siws.ts';
 import { createPercayaStore, type PercayaStore } from './store.ts';
 import {
+  buildBuyTx,
   buildCheckpointTx,
   buildClaimTx,
   buildOpenCallTx,
@@ -326,6 +327,9 @@ export function createApp(customStore?: PercayaStore) {
     try {
       const { account } = await c.req.json<{ account: string }>();
       if (!account) return c.json({ error: 'Missing account pubkey' }, 400);
+      if (action === 'buy') {
+        return c.json(await buildBuyTx(rpcUrl, account, call));
+      }
       if (action === 'checkpoint') {
         return c.json(await buildCheckpointTx(rpcUrl, account, call));
       }

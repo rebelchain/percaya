@@ -1,4 +1,11 @@
-import { LAMPORTS_PER_SOL_N, PDA_SEEDS, u64LeBytes, type CallDetail } from '@percaya/core';
+import {
+  BPS_DENOMINATOR_N,
+  LAMPORTS_PER_SOL_N,
+  PDA_SEEDS,
+  quoteBuy,
+  u64LeBytes,
+  type CallDetail,
+} from '@percaya/core';
 import {
   Connection,
   Keypair,
@@ -10,6 +17,7 @@ import {
 } from '@solana/web3.js';
 import {
   anchorIxDiscriminator,
+  encodeBuyIxData,
   encodeCheckpointIxData,
   encodeClaimIxData,
   encodeOpenCallIxData,
@@ -20,6 +28,7 @@ import { loadDevnetDeployment } from './devnet-sync.ts';
 
 const SPL_TOKEN_ID = new PublicKey('TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA');
 const TOKEN_2022_ID = new PublicKey('TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb');
+const ATA_PROGRAM_ID = new PublicKey('ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL');
 
 async function compileV0Base64(
   conn: Connection,
@@ -182,6 +191,78 @@ export async function buildOpenCallTx(params: {
     stakeLamports: stakeLamports.toString(),
     totalLamports: (bondNeededLamports + stakeLamports).toString(),
   };
+}
+
+export async function buildBuyTx(rpcUrl: string, callerBase58: string, call: CallDetail) {
+  const conn = new Connection(rpcUrl, 'confirmed');
+  const { percayaProgramId, ammProgramId } = getProgramIds();
+  const programId = new PublicKey(percayaProgramId);
+  const ammPk = new PublicKey(ammProgramId);
+  const caller = new PublicKey(callerBase58);
+  const callPool = new PublicKey(call.pda);
+  const ammPool = new PublicKey(call.rules.ammPool);
+  const tokenMint = new PublicKey(call.token.mint);
+
+  const ammInfo = await conn.getAccountInfo(ammPool);
+  if (!ammInfo) throw new Error('AmmPool not found on Devnet');
+  const ammTokenVault = new PublicKey(ammInfo.data.subarray(72, 104));
+  const feeBps = BigInt(ammInfo.data.readUInt16LE(105));
+  const solReserve = ammInfo.data.readBigUInt64LE(107);
+  const tokenReserve = ammInfo.data.readBigUInt64LE(115);
+
+  const [solVault] = PublicKey.findProgramAddressSync(
+    PDA_SEEDS.solVault(call.callId).map((b) => Buffer.from(b)),
+    programId,
+  );
+  const [allowedToken] = PublicKey.findProgramAddressSync(
+    PDA_SEEDS.allowedToken(tokenMint.toBytes()).map((b) => Buffer.from(b)),
+    programId,
+  );
+  const [ammSolVault] = PublicKey.findProgramAddressSync(
+    PDA_SEEDS.ammSolVault(ammPool.toBytes()).map((b) => Buffer.from(b)),
+    ammPk,
+  );
+  const [callTokenVault] = PublicKey.findProgramAddressSync(
+    [callPool.toBuffer(), SPL_TOKEN_ID.toBuffer(), tokenMint.toBuffer()],
+    ATA_PROGRAM_ID,
+  );
+
+  const expectedOut = quoteBuy(solReserve, tokenReserve, BigInt(call.totalInLamports), feeBps);
+  const minTokensOut = (expectedOut * 9_800n) / BPS_DENOMINATOR_N;
+
+  const createAtaIx = new TransactionInstruction({
+    programId: ATA_PROGRAM_ID,
+    keys: [
+      { pubkey: caller, isSigner: true, isWritable: true },
+      { pubkey: callTokenVault, isSigner: false, isWritable: true },
+      { pubkey: callPool, isSigner: false, isWritable: false },
+      { pubkey: tokenMint, isSigner: false, isWritable: false },
+      { pubkey: SystemProgram.programId, isSigner: false, isWritable: false },
+      { pubkey: SPL_TOKEN_ID, isSigner: false, isWritable: false },
+    ],
+    data: Buffer.from([1]),
+  });
+
+  const buyIx = new TransactionInstruction({
+    programId,
+    keys: [
+      { pubkey: caller, isSigner: true, isWritable: true },
+      { pubkey: callPool, isSigner: false, isWritable: true },
+      { pubkey: solVault, isSigner: false, isWritable: true },
+      { pubkey: allowedToken, isSigner: false, isWritable: false },
+      { pubkey: ammPool, isSigner: false, isWritable: true },
+      { pubkey: ammSolVault, isSigner: false, isWritable: true },
+      { pubkey: tokenMint, isSigner: false, isWritable: false },
+      { pubkey: ammTokenVault, isSigner: false, isWritable: true },
+      { pubkey: callTokenVault, isSigner: false, isWritable: true },
+      { pubkey: SPL_TOKEN_ID, isSigner: false, isWritable: false },
+      { pubkey: ammPk, isSigner: false, isWritable: false },
+      { pubkey: SystemProgram.programId, isSigner: false, isWritable: false },
+    ],
+    data: encodeBuyIxData(minTokensOut),
+  });
+
+  return { transaction: await compileV0Base64(conn, caller, [createAtaIx, buyIx]) };
 }
 
 export async function buildCheckpointTx(rpcUrl: string, signerBase58: string, call: CallDetail) {

@@ -1,12 +1,15 @@
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import * as Haptics from 'expo-haptics';
 import React, { useRef } from 'react';
-import { Modal, Pressable, SafeAreaView, StyleSheet, Text, View } from 'react-native';
+import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 import QRCode from 'react-native-qrcode-svg';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { buildCallDeepLink, parseCallIdFromLink } from '../call-links';
-
-const INK = '#0F1D24';
-const ACCENT = '#1F6E9C';
+import { RADII, SPACING, TYPE } from '../theme/tokens';
+import { useTheme } from '../theme/ThemeContext';
+import { BottomSheet } from './ui/BottomSheet';
+import { X } from './ui/icons';
+import { PrimaryButton, SecondaryButton } from './ui/primitives';
 
 /** Shows the Call's deep link as a QR code so another phone can scan it. */
 export function CallQrModal(props: {
@@ -15,29 +18,28 @@ export function CallQrModal(props: {
   onClose: () => void;
 }) {
   const { callId, symbol, onClose } = props;
+  const { colors } = useTheme();
+  const link = callId !== null ? buildCallDeepLink(callId) : '';
+
   return (
-    <Modal visible={callId !== null} transparent animationType="fade" onRequestClose={onClose}>
-      <View style={s.backdrop}>
-        <View style={s.sheet}>
-          <Text style={s.title}>
-            Call #{callId}
-            {symbol ? ` · $${symbol}` : ''}
+    <BottomSheet
+      visible={callId !== null}
+      onClose={onClose}
+      title={callId !== null ? `Call #${callId}${symbol ? ` · $${symbol}` : ''}` : 'Call QR'}
+      subtitle="Scan with the percaya QR camera to jump straight into this pool."
+    >
+      {callId !== null && (
+        <View style={{ alignItems: 'center', gap: SPACING.sm }}>
+          <View style={s.qrBox}>
+            <QRCode value={link} size={208} color="#0F1D24" backgroundColor="#FFFFFF" />
+          </View>
+          <Text selectable style={[TYPE.micro, TYPE.num, { color: colors.accent }]}>
+            {link}
           </Text>
-          <Text style={s.sub}>
-            Scan with the percaya camera to open this pool, its fixed rules, and the join window.
-          </Text>
-          {callId !== null && (
-            <View style={s.qrBox}>
-              <QRCode value={buildCallDeepLink(callId)} size={208} color={INK} backgroundColor="#FFFFFF" />
-            </View>
-          )}
-          <Text style={s.link}>{callId !== null ? buildCallDeepLink(callId) : ''}</Text>
-          <Pressable style={s.btn} onPress={onClose}>
-            <Text style={s.btnText}>Close</Text>
-          </Pressable>
         </View>
-      </View>
-    </Modal>
+      )}
+      <SecondaryButton label="Close" onPress={onClose} />
+    </BottomSheet>
   );
 }
 
@@ -61,11 +63,16 @@ export function CallScannerModal(props: {
 
   return (
     <Modal visible={visible} animationType="slide" onRequestClose={onClose}>
-      <SafeAreaView style={s.scanRoot}>
+      <SafeAreaView style={s.scanRoot} edges={['top', 'bottom']}>
         <View style={s.scanHeader}>
-          <Text style={s.scanTitle}>Scan a Call QR</Text>
-          <Pressable onPress={onClose}>
-            <Text style={s.scanClose}>Close</Text>
+          <Text style={[TYPE.title, { color: '#FFFFFF' }]}>Scan a Call QR</Text>
+          <Pressable
+            onPress={onClose}
+            style={s.closeCircle}
+            accessibilityRole="button"
+            accessibilityLabel="Close scanner"
+          >
+            <X size={20} color="#FFFFFF" strokeWidth={2} />
           </Pressable>
         </View>
 
@@ -73,13 +80,11 @@ export function CallScannerModal(props: {
           <View style={s.center} />
         ) : !permission.granted ? (
           <View style={s.center}>
-            <Text style={s.scanBody}>
-              Camera access is only used to read percaya Call QR codes. Nothing is recorded or
+            <Text style={[TYPE.body, { color: '#E2E8EC', textAlign: 'center', marginBottom: 16 }]}>
+              Camera access is only used to scan percaya Call QR codes. Nothing is recorded or
               uploaded.
             </Text>
-            <Pressable style={s.btn} onPress={requestPermission}>
-              <Text style={s.btnText}>Allow camera</Text>
-            </Pressable>
+            <PrimaryButton label="Allow Camera" onPress={requestPermission} />
           </View>
         ) : (
           <View style={s.cameraWrap}>
@@ -91,7 +96,7 @@ export function CallScannerModal(props: {
                 if (handled.current) return;
                 const id = parseCallIdFromLink(data);
                 if (id === null) {
-                  setHint('Not a percaya Call QR. Try again.');
+                  setHint('Not a percaya Call QR. Point at a percaya pool code.');
                   return;
                 }
                 handled.current = true;
@@ -109,19 +114,29 @@ export function CallScannerModal(props: {
 }
 
 const s = StyleSheet.create({
-  backdrop: { flex: 1, backgroundColor: 'rgba(15,29,36,0.55)', justifyContent: 'center', padding: 24 },
-  sheet: { backgroundColor: '#FFFFFF', borderRadius: 20, padding: 20, alignItems: 'center', gap: 10 },
-  title: { fontSize: 18, fontWeight: '700', color: INK },
-  sub: { fontSize: 13, color: '#66777F', textAlign: 'center' },
-  qrBox: { padding: 14, borderRadius: 14, borderWidth: 1, borderColor: '#E2E8EC', marginVertical: 6 },
-  link: { fontSize: 12, color: ACCENT, fontFamily: 'monospace' },
-  btn: { backgroundColor: INK, paddingVertical: 12, paddingHorizontal: 22, borderRadius: 12, marginTop: 6 },
-  btnText: { color: '#FFFFFF', fontWeight: '700' },
-  scanRoot: { flex: 1, backgroundColor: '#0F1D24' },
-  scanHeader: { flexDirection: 'row', justifyContent: 'space-between', padding: 16 },
-  scanTitle: { color: '#FFFFFF', fontSize: 17, fontWeight: '700' },
-  scanClose: { color: '#9FD0EA', fontSize: 15 },
-  scanBody: { color: '#E2E8EC', textAlign: 'center', marginBottom: 14 },
+  qrBox: {
+    padding: 16,
+    borderRadius: RADII.lg,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#E2E8EC',
+  },
+  scanRoot: { flex: 1, backgroundColor: '#0B1216' },
+  scanHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: SPACING.lg,
+    paddingVertical: SPACING.md,
+  },
+  closeCircle: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255,255,255,0.14)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24 },
   cameraWrap: { flex: 1, margin: 16, borderRadius: 20, overflow: 'hidden' },
   frame: {
@@ -139,9 +154,10 @@ const s = StyleSheet.create({
     bottom: 24,
     alignSelf: 'center',
     color: '#FFFFFF',
-    backgroundColor: 'rgba(15,29,36,0.7)',
-    paddingVertical: 6,
-    paddingHorizontal: 12,
+    backgroundColor: 'rgba(11,18,22,0.82)',
+    paddingVertical: 8,
+    paddingHorizontal: 14,
     borderRadius: 10,
+    fontSize: 13,
   },
 });

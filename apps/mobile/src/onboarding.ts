@@ -29,33 +29,33 @@ export function computeOnboardingSteps(input: OnboardingProgressInput): {
   const steps: OnboardingStepItem[] = [
     {
       id: 'connect',
-      title: '1. Connect MWA 2.0 Wallet',
-      subtitle: 'Works with Seed Vault, Solflare, Phantom, or MWA Fake Wallet.',
+      title: '1. Connect Solana Wallet',
+      subtitle: 'Works with Seed Vault, Solflare, or Phantom.',
       ctaLabel: 'Connect',
       done: input.connected,
     },
     {
       id: 'fund',
-      title: '2. Fund Devnet Test Wallet (≥ 0.06 SOL)',
+      title: '2. Get Devnet Test SOL (≥ 0.06 SOL)',
       subtitle:
         input.connected && input.balanceSol !== null
           ? `Current balance: ${input.balanceSol.toFixed(4)} SOL.`
           : 'Covers the reusable 0.05 SOL caller bond + pool stake.',
-      ctaLabel: '+0.08 SOL',
+      ctaLabel: 'Get SOL',
       done: funded,
     },
     {
       id: 'sgt',
-      title: '3. Bind Seeker Genesis Token (Token-2022)',
-      subtitle: 'Mints & binds a 1-per-device NonTransferable SGT to GenesisRegistry PDA.',
-      ctaLabel: 'Verify SGT',
+      title: '3. Verify with Seeker',
+      subtitle: 'Anchors one permanent caller track record to your device.',
+      ctaLabel: 'Verify',
       done: sgtDone,
     },
     {
       id: 'call',
-      title: '4. Open a Pooled Call or Scan Call QR',
-      subtitle: 'Lock SOL under immutable TP/SL rules or scan a live pool QR.',
-      ctaLabel: '+ Post',
+      title: '4. Join a Pool or Post a Call',
+      subtitle: 'Enter an open call window or lock SOL to open a pool.',
+      ctaLabel: 'Post',
       done: input.hasInteractedCall,
     },
   ];

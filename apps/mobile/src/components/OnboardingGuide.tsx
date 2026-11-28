@@ -1,20 +1,14 @@
 import React from 'react';
-import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import type { OnboardingStepId, OnboardingStepItem } from '../onboarding';
-
-const INK = '#0F1D24';
-const INK2 = '#364852';
-const INK3 = '#66777F';
-const ACCENT = '#1F6E9C';
-const ACCENT_DEEP = '#123F5A';
-const ACCENT_FILL = '#DBEAF4';
-const ACCENT_SOFT = '#EDF5FA';
-const GAIN = '#0A8A5F';
-const GAIN_FILL = '#DCF3E8';
-const LINE = '#E2E8EC';
+import { RADII, SPACING, TYPE } from '../theme/tokens';
+import { useTheme } from '../theme/ThemeContext';
+import { BottomSheet } from './ui/BottomSheet';
+import { Check, Lock, QrCode, ShieldCheck, Wallet } from './ui/icons';
+import { PrimaryButton, SecondaryButton } from './ui/primitives';
 
 /**
- * Calm 3-pillar first-launch Welcome Sheet (re-openable anytime via the `?` header button).
+ * Calm 3-pillar Quick Guide BottomSheet (re-openable anytime via the `?` header icon).
  */
 export function WelcomeModal(props: {
   visible: boolean;
@@ -23,75 +17,78 @@ export function WelcomeModal(props: {
   onConnect: () => void;
 }) {
   const { visible, connected, onClose, onConnect } = props;
+  const { colors } = useTheme();
+
   return (
-    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
-      <View style={s.backdrop}>
-        <View style={s.sheet}>
-          <View style={s.pillRow}>
-            <View style={s.pill}>
-              <Text style={s.pillText}>SOLANA MOBILE SEEKER · QUICK GUIDE</Text>
-            </View>
+    <BottomSheet
+      visible={visible}
+      onClose={onClose}
+      title="One buy. One sale. Same price."
+      subtitle="Accountable token call pools built for Solana Mobile Seeker."
+    >
+      <View style={{ gap: SPACING.sm }}>
+        <View style={[s.pointCard, { backgroundColor: colors.subtle, borderColor: colors.line }]}>
+          <View style={s.pointRow}>
+            <Lock size={16} color={colors.accent} strokeWidth={2} />
+            <Text style={[TYPE.captionSemi, { color: colors.ink }]}>
+              1 · Caller Skin in the Game
+            </Text>
           </View>
-
-          <Text style={s.title}>One buy. One sale. The same price for everyone.</Text>
-          <Text style={s.lead}>
-            percaya turns mobile token calls into accountable on-chain pools—built natively for a
-            phone in your pocket.
+          <Text style={[TYPE.caption, { color: colors.ink2 }]}>
+            Every call locks the caller&apos;s own SOL (≥5% of pool) under immutable TP/SL rules.
+            Replies show &ldquo;In Pool&rdquo; vs &ldquo;Spectator&rdquo;.
           </Text>
+        </View>
 
-          <ScrollView style={{ maxHeight: 300 }} contentContainerStyle={{ gap: 10 }}>
-            <View style={s.pointCard}>
-              <Text style={s.pointTitle}>1 · No Free Shilling (Call-as-a-Thread)</Text>
-              <Text style={s.pointBody}>
-                Every root post locks the caller&apos;s own SOL (≥5% of pool) under immutable TP/SL
-                rules. Replies auto-tag &ldquo;In Pool&rdquo; vs &ldquo;Spectator&rdquo;.
-              </Text>
-            </View>
-
-            <View style={s.pointCard}>
-              <Text style={s.pointTitle}>2 · Seeker Hardware Reputation (Token-2022 SGT)</Text>
-              <Text style={s.pointBody}>
-                Tiers 1–3 (5×–20× pool cap) bind a 1-per-device Seeker Genesis NFT to an on-chain
-                GenesisRegistry PDA—closing burner-wallet resets.
-              </Text>
-            </View>
-
-            <View style={s.pointCard}>
-              <Text style={s.pointTitle}>3 · Native Camera QR & Push Alerts</Text>
-              <Text style={s.pointBody}>
-                Scan Call QRs in person via your phone camera, sign in one swipe via MWA 2.0, and
-                receive Android notifications when pools settle.
-              </Text>
-            </View>
-          </ScrollView>
-
-          <View style={s.actions}>
-            {!connected && (
-              <Pressable
-                style={s.primaryBtn}
-                onPress={() => {
-                  onClose();
-                  onConnect();
-                }}
-              >
-                <Text style={s.primaryBtnText}>Connect Wallet (MWA 2.0)</Text>
-              </Pressable>
-            )}
-            <Pressable style={s.secondaryBtn} onPress={onClose}>
-              <Text style={s.secondaryBtnText}>
-                {connected ? 'Back to App' : 'Explore Live Devnet Feed First'}
-              </Text>
-            </Pressable>
+        <View style={[s.pointCard, { backgroundColor: colors.subtle, borderColor: colors.line }]}>
+          <View style={s.pointRow}>
+            <ShieldCheck size={16} color={colors.gain} strokeWidth={2} />
+            <Text style={[TYPE.captionSemi, { color: colors.ink }]}>
+              2 · Hardware-Bound Track Record
+            </Text>
           </View>
+          <Text style={[TYPE.caption, { color: colors.ink2 }]}>
+            Verifying with Seeker binds one permanent record per device, unlocking Tiers 1–3 (5×–20×
+            pool cap) and blocking burner-wallet resets.
+          </Text>
+        </View>
+
+        <View style={[s.pointCard, { backgroundColor: colors.subtle, borderColor: colors.line }]}>
+          <View style={s.pointRow}>
+            <QrCode size={16} color={colors.open} strokeWidth={2} />
+            <Text style={[TYPE.captionSemi, { color: colors.ink }]}>
+              3 · Scan QR, Join & Claim Pro-Rata
+            </Text>
+          </View>
+          <Text style={[TYPE.caption, { color: colors.ink2 }]}>
+            Scan Call QR codes in person, join open windows in one tap, and receive push alerts when
+            checkpoints settle.
+          </Text>
         </View>
       </View>
-    </Modal>
+
+      <View style={{ gap: SPACING.sm }}>
+        {!connected && (
+          <PrimaryButton
+            label="Connect Wallet"
+            icon={<Wallet size={16} color="#FFFFFF" strokeWidth={2} />}
+            onPress={() => {
+              onClose();
+              onConnect();
+            }}
+          />
+        )}
+        <SecondaryButton
+          label={connected ? 'Back to Feed' : 'Browse Live Feed First'}
+          onPress={onClose}
+        />
+      </View>
+    </BottomSheet>
   );
 }
 
 /**
- * Dismissible 4-step interactive onboarding checklist at the top of Home.
- * Guides judges and first-time users through Connect -> Faucet -> Verify SGT -> Open/Scan Call.
+ * Dismissible 4-step interactive Getting Started card at the top of Home.
  */
 export function JudgeChecklistCard(props: {
   steps: OnboardingStepItem[];
@@ -101,37 +98,67 @@ export function JudgeChecklistCard(props: {
   onDismiss: () => void;
 }) {
   const { steps, completedCount, busy, onAction, onDismiss } = props;
+  const { colors } = useTheme();
+
   return (
-    <View style={s.card}>
+    <View
+      style={[
+        s.card,
+        { backgroundColor: colors.surface, borderColor: colors.openFill },
+      ]}
+    >
       <View style={s.cardHeader}>
         <View>
-          <Text style={s.cardTitle}>Getting Started · {completedCount}/4</Text>
-          <Text style={s.cardSub}>Interactive Solana Devnet walkthrough (zero local setup)</Text>
+          <Text style={[TYPE.bodySemi, { color: colors.ink, fontSize: 14 }]}>
+            Getting Started · {completedCount}/4
+          </Text>
+          <Text style={[TYPE.micro, { color: colors.ink3, fontWeight: '400' }]}>
+            Quick Solana Devnet setup
+          </Text>
         </View>
         <Pressable onPress={onDismiss} hitSlop={8}>
-          <Text style={s.dismissText}>Hide</Text>
+          <Text style={[TYPE.captionSemi, { color: colors.accent, fontSize: 12 }]}>Hide</Text>
         </Pressable>
       </View>
 
-      <View style={{ gap: 8, marginTop: 8 }}>
+      <View style={{ gap: 6 }}>
         {steps.map((step) => (
-          <View key={step.id} style={s.stepRow}>
-            <View style={[s.checkCircle, step.done && s.checkCircleDone]}>
-              <Text style={[s.checkMark, step.done && s.checkMarkDone]}>
-                {step.done ? '✓' : '•'}
-              </Text>
+          <View
+            key={step.id}
+            style={[s.stepRow, { borderTopColor: colors.line }]}
+          >
+            <View
+              style={[
+                s.checkCircle,
+                { backgroundColor: step.done ? colors.gainFill : colors.subtle },
+              ]}
+            >
+              {step.done ? (
+                <Check size={13} color={colors.gain} strokeWidth={2.5} />
+              ) : (
+                <View style={[s.pendingDot, { backgroundColor: colors.ink3 }]} />
+              )}
             </View>
             <View style={{ flex: 1 }}>
-              <Text style={[s.stepTitle, step.done && s.stepTitleDone]}>{step.title}</Text>
-              <Text style={s.stepSub}>{step.subtitle}</Text>
+              <Text
+                style={[
+                  TYPE.captionSemi,
+                  { color: step.done ? colors.gainText : colors.ink, fontSize: 12 },
+                ]}
+              >
+                {step.title}
+              </Text>
+              <Text style={[TYPE.micro, { color: colors.ink3, fontWeight: '400' }]}>
+                {step.subtitle}
+              </Text>
             </View>
             {!step.done && (
               <Pressable
-                style={s.stepBtn}
+                style={[s.stepBtn, { backgroundColor: colors.openFill }]}
                 disabled={busy}
                 onPress={() => onAction(step.id)}
               >
-                <Text style={s.stepBtnText}>{step.ctaLabel}</Text>
+                <Text style={[TYPE.micro, { color: colors.openText }]}>{step.ctaLabel}</Text>
               </Pressable>
             )}
           </View>
@@ -142,98 +169,50 @@ export function JudgeChecklistCard(props: {
 }
 
 const s = StyleSheet.create({
-  backdrop: {
-    flex: 1,
-    backgroundColor: 'rgba(15,29,36,0.55)',
-    justifyContent: 'center',
-    padding: 20,
-  },
-  sheet: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 20,
-    padding: 20,
-    gap: 12,
-  },
-  pillRow: { flexDirection: 'row' },
-  pill: {
-    backgroundColor: ACCENT_SOFT,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 999,
-  },
-  pillText: { fontSize: 10, fontWeight: '700', color: ACCENT_DEEP, letterSpacing: 0.5 },
-  title: { fontSize: 19, fontWeight: '700', color: INK, lineHeight: 25 },
-  lead: { fontSize: 13, color: INK2, lineHeight: 19 },
   pointCard: {
-    backgroundColor: '#F6F8FA',
-    borderRadius: 12,
+    borderRadius: RADII.md,
     borderWidth: 1,
-    borderColor: LINE,
-    padding: 12,
-    gap: 3,
+    padding: SPACING.md,
+    gap: 4,
   },
-  pointTitle: { fontSize: 13, fontWeight: '700', color: INK },
-  pointBody: { fontSize: 12, color: INK2, lineHeight: 17 },
-  actions: { gap: 8, marginTop: 4 },
-  primaryBtn: {
-    backgroundColor: ACCENT,
-    borderRadius: 12,
-    paddingVertical: 12,
+  pointRow: {
+    flexDirection: 'row',
     alignItems: 'center',
+    gap: 7,
   },
-  primaryBtnText: { color: '#FFFFFF', fontWeight: '700', fontSize: 14 },
-  secondaryBtn: {
-    backgroundColor: '#F6F8FA',
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: LINE,
-    paddingVertical: 11,
-    alignItems: 'center',
-  },
-  secondaryBtnText: { color: INK, fontWeight: '600', fontSize: 13 },
   card: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: ACCENT_FILL,
-    padding: 14,
-    marginBottom: 12,
+    borderRadius: RADII.lg,
+    borderWidth: 1.5,
+    padding: SPACING.lg,
+    gap: SPACING.sm,
   },
   cardHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
   },
-  cardTitle: { fontSize: 14, fontWeight: '700', color: INK },
-  cardSub: { fontSize: 11, color: INK3, marginTop: 1 },
-  dismissText: { fontSize: 12, fontWeight: '600', color: ACCENT },
   stepRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
-    paddingVertical: 6,
+    paddingTop: 8,
     borderTopWidth: 1,
-    borderTopColor: '#F2F5F7',
   },
   checkCircle: {
     width: 22,
     height: 22,
     borderRadius: 11,
-    backgroundColor: '#F2F5F7',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  checkCircleDone: { backgroundColor: GAIN_FILL },
-  checkMark: { fontSize: 12, fontWeight: '700', color: INK3 },
-  checkMarkDone: { color: GAIN },
-  stepTitle: { fontSize: 12, fontWeight: '700', color: INK },
-  stepTitleDone: { color: GAIN },
-  stepSub: { fontSize: 11, color: INK3, lineHeight: 15 },
+  pendingDot: {
+    width: 5,
+    height: 5,
+    borderRadius: 3,
+  },
   stepBtn: {
-    backgroundColor: ACCENT_FILL,
     paddingHorizontal: 10,
     paddingVertical: 6,
-    borderRadius: 8,
+    borderRadius: RADII.sm,
   },
-  stepBtnText: { fontSize: 11, fontWeight: '700', color: ACCENT_DEEP },
 });
